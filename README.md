@@ -226,11 +226,20 @@ Cached art lives in `icons/`:
 | `--sheet-margin` | `0.25` | blank margin around the sheet edge |
 | `--no-sheets` | — | render the labels but skip the sheets |
 
-`bin` takes the same flags but with defaults sized for a shelf bin: `--cap-height
-0.4`, `--icon-height 2.6`, `--gap 0.25`, `--pad 0.25`, plus `--bin-width 6`,
-`--bin-height 4`, and `--sheet-width 12`. It also defaults to `--icon-style
-outline` rather than `solid` — at 2.6 in tall the narrow white channels that make
-outline art unweedable on a 0.75 in drawer label are wide enough to lift cleanly.
+`bin` takes the same flags but with defaults sized for a shelf bin: `--pad 0.25`,
+`--bin-width 6`, `--bin-height 4`, and `--sheet-width 12`. It also defaults to
+`--icon-style outline` rather than `solid` — at 3 in tall the narrow white
+channels that make outline art unweedable on a 0.75 in drawer label are wide
+enough to lift cleanly.
+
+`--cap-height` and `--icon-height` default to fractions of the cell height rather
+than to fixed inches, so a bin printed at any size keeps the same composition.
+The fractions come from the hand-built reference label in `out/raw/bin.svg`: cap
+height `0.0922`, subject height `0.7530`, with the text cap box centered at
+`0.0522` of the height and the subject's bounding box at `0.6187`. Both are
+centered on the cell's vertical axis. At the default 6 x 4 in that is a 0.369 in
+cap and a 3.01 in subject. A subject wider than the cell minus `--pad` is scaled
+down to fit, keeping its center on the same point.
 
 Cap height is taken from the font's metrics, not from each string's bounding box,
 so every label in a set shares one baseline and one letter size. Round letters
@@ -252,9 +261,9 @@ drawer secondary:  ╭─ border ───────────────�
                    ╰─────────────────────────────────────╯
 
 bin:  ┌──────── 6in ────────┐
-      │        text         │
-      │         gap         │  4in, content centered
-      │        icon         │
+      │        text         │  cap box centered at 0.0522 H
+      │                     │  4in
+      │        icon         │  bbox centered at 0.6187 H
       └─────────────────────┘
 ```
 

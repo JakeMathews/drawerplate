@@ -1,0 +1,19 @@
+{
+  "bin_width": 6.0,
+  "bin_height": 4.0,
+  "sheet_width": 12.0,
+  "bins": [
+    {
+      "name": "rebel-500",
+      "text": "Honda Rebel 500",
+      "icon": "rebel500",
+      "icon_desc": "a Honda Rebel 500 cruiser motorcycle seen from the side, facing left"
+    },
+    {
+      "name": "saturn-sky",
+      "text": "Saturn Sky",
+      "icon": "saturn-sky",
+      "icon_desc": "a Saturn Sky two-seat roadster convertible with the top down, seen from the side, facing left"
+    }
+  ]
+}

@@ -72,10 +72,10 @@ def add_bin_args(p):
                    help="width of one label cell (default 6)")
     g.add_argument("--bin-height", type=float, default=4.0, metavar="IN",
                    help="height of one label cell (default 4)")
-    g.add_argument("--cap-height", type=float, default=0.4, metavar="IN")
-    g.add_argument("--icon-height", type=float, default=2.6, metavar="IN")
-    g.add_argument("--gap", type=float, default=0.25, metavar="IN",
-                   help="space between text and icon (default 0.25)")
+    g.add_argument("--cap-height", type=float, default=None, metavar="IN",
+                   help="default 0.0922 of the cell height, per the reference label")
+    g.add_argument("--icon-height", type=float, default=None, metavar="IN",
+                   help="default 0.753 of the cell height, per the reference label")
     g.add_argument("--pad", type=float, default=0.25, metavar="IN",
                    help="keep-out margin inside the cell (default 0.25)")
     g.add_argument("--tracking", type=float, default=0.0, metavar="EM")
@@ -256,7 +256,6 @@ def bin_style_from(args):
         height_in=args.bin_height,
         cap_height_in=args.cap_height,
         icon_height_in=args.icon_height,
-        gap_in=args.gap,
         pad_in=args.pad,
         tracking_em=args.tracking,
         font_path=args.font,

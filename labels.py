@@ -198,26 +198,38 @@ def _rounded_rect(x, y, w, h, r, ccw=False):
     )
 
 
+# Measured off the hand-built reference label out/raw/bin.svg (Yamaha XSR900) and held
+# as fractions of the cell so any bin size reproduces that layout. The reference art
+# fills its 4in height edge to edge, so the text sits hard against the top.
+BIN_CAP_HEIGHT_FRAC = 0.0922
+BIN_TEXT_CENTER_FRAC = 0.0522
+BIN_ICON_CENTER_FRAC = 0.6187
+BIN_ICON_HEIGHT_FRAC = 0.7530
+
+
 def build_bin_label(
     text,
     icon=None,
     width_in=6.0,
     height_in=4.0,
-    cap_height_in=0.4,
-    icon_height_in=2.2,
-    gap_in=0.25,
+    cap_height_in=None,
+    icon_height_in=None,
     pad_in=0.25,
     tracking_em=0.0,
     font_path=FONT_PATH,
 ):
-    """Return (svg, paths, width_in, height_in) for a bin label: text stacked over icon.
+    """Return (svg, paths, width_in, height_in) for a bin label: text over a subject.
 
-    Unlike a drawer label the canvas is a fixed cell; content is centered in it both
-    ways so a shelf of bins lines up without measuring anything on import.
+    Both are centered on the cell's vertical axis, with the text cap box and the
+    subject's bounding box each pinned to the height fraction measured off the
+    reference label, so every bin size prints the same composition.
     """
     W, H = width_in * PX_PER_IN, height_in * PX_PER_IN
-    gap = gap_in * PX_PER_IN
     avail_w = W - 2 * pad_in * PX_PER_IN
+    if cap_height_in is None:
+        cap_height_in = height_in * BIN_CAP_HEIGHT_FRAC
+    if icon_height_in is None:
+        icon_height_in = height_in * BIN_ICON_HEIGHT_FRAC
 
     icon_cmds, icon_w, icon_h = None, 0.0, 0.0
     if icon:
@@ -234,26 +246,24 @@ def build_bin_label(
     if ink and (ink[2] - ink[0]) * scale > avail_w:
         scale *= avail_w / ((ink[2] - ink[0]) * scale)
         print(f"  shrank text to fit: cap height {scale * cap_units / PX_PER_IN:.3f}in")
-    text_w = (ink[2] - ink[0]) * scale if ink else 0.0
-    text_h = (ink[3] - ink[1]) * scale if ink else 0.0
+    cap_px = cap_units * scale
 
-    block_h = text_h + icon_h + (gap if text_h and icon_h else 0.0)
-    if block_h > H:
+    icon_top = H * BIN_ICON_CENTER_FRAC - icon_h / 2
+    if icon_cmds and (icon_top < 0 or icon_top + icon_h > H):
         raise SystemExit(
-            f"content is {block_h / PX_PER_IN:.2f}in tall but the cell is {height_in}in; "
-            "lower --icon-height or --cap-height"
+            f"a {icon_h / PX_PER_IN:.2f}in subject overruns the {height_in}in cell; "
+            "lower --icon-height"
         )
-    top = (H - block_h) / 2
 
     paths = []
     if raw:
-        baseline = top + ink[3] * scale
+        baseline = H * BIN_TEXT_CENTER_FRAC + cap_px / 2
         paths.append(("text", svgpath.serialize(svgpath.transform(
-            raw, scale, 0, 0, -scale, (W - text_w) / 2 - ink[0] * scale, baseline
+            raw, scale, 0, 0, -scale, (W - (ink[0] + ink[2]) * scale) / 2, baseline
         ))))
     if icon_cmds:
         paths.append(("icon", svgpath.serialize(svgpath.transform(
-            icon_cmds, 1, 0, 0, 1, (W - icon_w) / 2, top + text_h + (gap if text_h else 0)
+            icon_cmds, 1, 0, 0, 1, (W - icon_w) / 2, icon_top
         ))))
 
     body = "\n  ".join(f'<path id="{name}" d="{d}"/>' for name, d in paths)
