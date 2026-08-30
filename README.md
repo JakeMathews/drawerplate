@@ -97,6 +97,14 @@ folder:
 resolves straight from the cache. Descriptions are remembered in
 `icons/catalog.json`, so later drawers can reference `"icon": "socket"` alone.
 
+`batch` also nests every label onto **12 x 12 in** sheets — `out/sheets/sheet-NN.svg`
+to cut, plus a white-on-black `sheet-NN.png` to eyeball first. Drawer labels all share
+one height, so the packing is a shelf fit: widest label first into the first row with
+room, rows stacked until the sheet is full, then a new sheet. Each label's offset is
+baked into its path data rather than wrapped in a `<g transform>`, so a sheet imports
+with the same guarantees as a single label. `sheet_width` and `sheet_height` can be set
+in the JSON alongside `drawer_width`; `--no-sheets` skips them.
+
 ### Shelf bins
 
 HDX-style bins on a shelf want a different shape: one big label per bin, text
@@ -207,6 +215,16 @@ Cached art lives in `icons/`:
 | `--turdsize` | `150` | drop traced specks/holes below this source-pixel area |
 | `--threshold` | `128` | black/white cutoff when binarizing a generated icon |
 | `--invert` | — | source art is light-on-dark; flip it before tracing |
+
+`batch` adds the sheet flags:
+
+| flag | default | what it does |
+| --- | --- | --- |
+| `--sheet-width` | `12` | sheet width to nest onto |
+| `--sheet-height` | `12` | sheet height |
+| `--gutter` | `0.125` | space between nested labels |
+| `--sheet-margin` | `0.25` | blank margin around the sheet edge |
+| `--no-sheets` | — | render the labels but skip the sheets |
 
 `bin` takes the same flags but with defaults sized for a shelf bin: `--cap-height
 0.4`, `--icon-height 2.6`, `--gap 0.25`, `--pad 0.25`, plus `--bin-width 6`,

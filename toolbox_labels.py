@@ -52,6 +52,20 @@ def add_style_args(p):
     add_trace_args(p)
 
 
+def add_sheet_args(p):
+    g = p.add_argument_group("sheets")
+    g.add_argument("--sheet-width", type=float, default=12.0, metavar="IN",
+                   help="stock vinyl width to nest labels onto (default 12)")
+    g.add_argument("--sheet-height", type=float, default=12.0, metavar="IN",
+                   help="sheet height (default 12)")
+    g.add_argument("--gutter", type=float, default=0.125, metavar="IN",
+                   help="space between nested labels (default 0.125)")
+    g.add_argument("--sheet-margin", type=float, default=0.25, metavar="IN",
+                   help="blank margin around the sheet edge (default 0.25)")
+    g.add_argument("--no-sheets", action="store_true",
+                   help="render the labels but skip the nested sheets")
+
+
 def add_bin_args(p):
     g = p.add_argument_group("sizing")
     g.add_argument("--bin-width", type=float, default=6.0, metavar="IN",
@@ -124,6 +138,26 @@ def resolve_icon(slug, desc, args):
                         style=args.icon_style, **trace_from(args))
 
 
+def rel(path):
+    try:
+        return path.relative_to(ROOT)
+    except ValueError:
+        return path
+
+
+def rasterize(svg, png_path, zoom=2):
+    tmp = png_path.with_suffix(".preview.svg")
+    tmp.parent.mkdir(parents=True, exist_ok=True)
+    tmp.write_text(svg)
+    try:
+        subprocess.run(["rsvg-convert", "-z", str(zoom), str(tmp), "-o", str(png_path)],
+                       check=True, capture_output=True)
+        tmp.unlink()
+        print(f"  preview   -> {rel(png_path)}")
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        print(f"  preview   -> {rel(tmp)} (install librsvg for PNG)")
+
+
 def emit(text, icon, side, args, out_path):
     if not args.no_upper:
         text = text.upper()
@@ -131,11 +165,7 @@ def emit(text, icon, side, args, out_path):
     out_path = Path(out_path).resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(svg)
-    try:
-        shown = out_path.relative_to(ROOT)
-    except ValueError:
-        shown = out_path
-    print(f"  {side:<9} {w:6.3f} x {h:.3f} in  {text!r}  -> {shown}")
+    print(f"  {side:<9} {w:6.3f} x {h:.3f} in  {text!r}  -> {rel(out_path)}")
     return side, paths, w
 
 
@@ -144,16 +174,8 @@ def write_preview(entries, args, png_path):
         return
     used = sum(w for _, _, w in entries)
     width = args.drawer_width or (used + 0.6)
-    svg = labels.drawer_preview(entries, width, label_height_in=args.label_height)
-    tmp = png_path.with_suffix(".preview.svg")
-    tmp.write_text(svg)
-    try:
-        subprocess.run(["rsvg-convert", "-z", "3", str(tmp), "-o", str(png_path)],
-                       check=True, capture_output=True)
-        tmp.unlink()
-        print(f"  preview   -> {png_path.relative_to(ROOT)}")
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        print(f"  preview   -> {tmp.relative_to(ROOT)} (install librsvg for PNG)")
+    rasterize(labels.drawer_preview(entries, width, label_height_in=args.label_height),
+              png_path, zoom=3)
     if args.drawer_width and used + 0.45 > args.drawer_width:
         print(f"  WARNING: labels total {used:.2f}in, drawer is "
               f"{args.drawer_width:.2f}in — they will crowd or overlap")
@@ -178,6 +200,28 @@ def render_drawer(name, primary, secondary, args):
                                          secondary.get("icon_desc"), args),
                             "secondary", args, d / "secondary.svg"))
     write_preview(entries, args, d / "preview.png")
+    return [(f"{name}/{side}", paths, w) for side, paths, w in entries]
+
+
+def write_sheets(items, args, stem):
+    if getattr(args, "no_sheets", False) or not items:
+        return
+    sheets = labels.nest(items, args.sheet_width, args.sheet_height,
+                         args.label_height, args.gutter, args.sheet_margin)
+    print(f"sheets ({args.sheet_width:g} x {args.sheet_height:g} in):")
+    stem.parent.mkdir(parents=True, exist_ok=True)
+    # A shorter run leaves higher-numbered sheets behind; they'd look cuttable.
+    for old in stem.parent.glob(f"{stem.name}-[0-9][0-9].*"):
+        if old.suffix in (".svg", ".png"):
+            old.unlink()
+    for n, placed in enumerate(sheets, 1):
+        path = stem.parent / f"{stem.name}-{n:02d}.svg"
+        path.write_text(labels.nest_sheet(placed, args.sheet_width, args.sheet_height))
+        print(f"  sheet {n:02d}  {len(placed):2d} labels  -> {rel(path)}")
+        rasterize(
+            labels.nest_sheet(placed, args.sheet_width, args.sheet_height, invert=True),
+            path.with_suffix(".png"),
+        )
 
 
 def cmd_drawer(args):
@@ -195,9 +239,15 @@ def cmd_batch(args):
     drawers = data["drawers"] if isinstance(data, dict) else data
     if isinstance(data, dict) and data.get("drawer_width") and not args.drawer_width:
         args.drawer_width = data["drawer_width"]
+    if isinstance(data, dict):
+        for key in ("sheet_width", "sheet_height"):
+            if data.get(key):
+                setattr(args, key, data[key])
+    items = []
     for d in drawers:
-        render_drawer(d.get("name") or slugify(d["primary"]["text"]),
-                      d["primary"], d.get("secondary"), args)
+        items += render_drawer(d.get("name") or slugify(d["primary"]["text"]),
+                               d["primary"], d.get("secondary"), args)
+    write_sheets(items, args, OUT_DIR / "sheets" / "sheet")
 
 
 def bin_style_from(args):
@@ -232,19 +282,11 @@ def write_bin_sheets(cells, args, stem):
         sheet.write_text(
             labels.tile_sheet(chunk, args.bin_width, args.bin_height, cols)
         )
-        print(f"  sheet     -> {sheet.relative_to(ROOT)}")
-        png = sheet.with_suffix(".png")
-        tmp = sheet.with_suffix(".preview.svg")
-        tmp.write_text(
-            labels.tile_sheet(chunk, args.bin_width, args.bin_height, cols, invert=True)
+        print(f"  sheet     -> {rel(sheet)}")
+        rasterize(
+            labels.tile_sheet(chunk, args.bin_width, args.bin_height, cols, invert=True),
+            sheet.with_suffix(".png"),
         )
-        try:
-            subprocess.run(["rsvg-convert", "-z", "2", str(tmp), "-o", str(png)],
-                           check=True, capture_output=True)
-            tmp.unlink()
-            print(f"  preview   -> {png.relative_to(ROOT)}")
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            print(f"  preview   -> {tmp.relative_to(ROOT)} (install librsvg for PNG)")
 
 
 def cmd_bin(args):
@@ -359,6 +401,7 @@ def main():
     p = sub.add_parser("batch", help="render every drawer described in a JSON file")
     p.add_argument("file")
     add_style_args(p)
+    add_sheet_args(p)
     p.set_defaults(func=cmd_batch)
 
     p = sub.add_parser("bin", help="render one shelf-bin label (text stacked over icon)")

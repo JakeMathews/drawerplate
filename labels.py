@@ -31,6 +31,18 @@ def drawer_preview(entries, drawer_width_in, label_height_in=0.75, margin_in=0.1
         f'<g fill="#ffffff" fill-rule="nonzero">{"".join(groups)}</g></svg>\n'
     )
 
+def _sheet_svg(body, w_in, h_in, invert):
+    back = '<rect width="100%" height="100%" fill="#111111"/>' if invert else ""
+    ink = "#ffffff" if invert else "#000000"
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
+        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+        f'width="{w_in:.4f}in" height="{h_in:.4f}in" '
+        f'viewBox="0 0 {w_in * PX_PER_IN:.3f} {h_in * PX_PER_IN:.3f}">{back}'
+        f'<g fill="{ink}" fill-rule="nonzero" stroke="none">{body}</g></svg>\n'
+    )
+
+
 def tile_sheet(cells, cell_w_in, cell_h_in, cols, invert=False):
     """Tile fixed-size label cells into one exact-size sheet SVG.
 
@@ -38,21 +50,66 @@ def tile_sheet(cells, cell_w_in, cell_h_in, cols, invert=False):
     """
     rows = (len(cells) + cols - 1) // cols
     cw, ch = cell_w_in * PX_PER_IN, cell_h_in * PX_PER_IN
-    W, H = cols * cw, rows * ch
     groups = []
     for i, paths in enumerate(cells):
         x, y = (i % cols) * cw, (i // cols) * ch
         d = "".join(p for _, p in paths)
         groups.append(f'<g transform="translate({x:.3f},{y:.3f})"><path d="{d}"/></g>')
-    back = '<rect width="100%" height="100%" fill="#111111"/>' if invert else ""
-    ink = "#ffffff" if invert else "#000000"
-    return (
-        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
-        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
-        f'width="{cols * cell_w_in:.4f}in" height="{rows * cell_h_in:.4f}in" '
-        f'viewBox="0 0 {W:.3f} {H:.3f}">{back}'
-        f'<g fill="{ink}" fill-rule="nonzero" stroke="none">{"".join(groups)}</g></svg>\n'
-    )
+    return _sheet_svg("".join(groups), cols * cell_w_in, rows * cell_h_in, invert)
+
+
+def nest(items, sheet_w_in, sheet_h_in, label_h_in, gutter_in, margin_in):
+    """Shelf-pack fixed-height, variable-width labels onto sheets.
+
+    items is a list of (key, paths, width_in). All labels share one height, so rows
+    are uniform and only the horizontal fill varies — widest-first into the first row
+    with room. Returns a list of sheets, each a list of (key, paths, x_in, y_in).
+    """
+    usable_w = sheet_w_in - 2 * margin_in
+    usable_h = sheet_h_in - 2 * margin_in
+    rows_per_sheet = int((usable_h + gutter_in + 1e-9) // (label_h_in + gutter_in))
+    if rows_per_sheet < 1:
+        raise SystemExit(
+            f"a {label_h_in}in label does not fit a {sheet_h_in}in sheet with "
+            f"{margin_in}in margins"
+        )
+    too_wide = [k for k, _, w in items if w > usable_w]
+    if too_wide:
+        raise SystemExit(
+            f"wider than the {usable_w:.2f}in usable sheet width: {', '.join(too_wide)}"
+        )
+
+    rows = []
+    for item in sorted(items, key=lambda it: -it[2]):
+        for row in rows:
+            if row[0] + gutter_in + item[2] <= usable_w:
+                row[0] += gutter_in + item[2]
+                row[1].append(item)
+                break
+        else:
+            rows.append([item[2], [item]])
+
+    sheets = []
+    for i in range(0, len(rows), rows_per_sheet):
+        placed = []
+        for r, (_, row_items) in enumerate(rows[i:i + rows_per_sheet]):
+            x = margin_in
+            y = margin_in + r * (label_h_in + gutter_in)
+            for key, paths, w in row_items:
+                placed.append((key, paths, x, y))
+                x += w + gutter_in
+        sheets.append(placed)
+    return sheets
+
+
+def nest_sheet(placed, sheet_w_in, sheet_h_in, invert=False):
+    """Render one packed sheet, baking each label's offset into its path data."""
+    out = []
+    for _, paths, x_in, y_in in placed:
+        cmds = svgpath.parse("".join(p for _, p in paths))
+        cmds = svgpath.transform(cmds, 1, 0, 0, 1, x_in * PX_PER_IN, y_in * PX_PER_IN)
+        out.append(f'<path d="{svgpath.serialize(cmds)}"/>')
+    return _sheet_svg("".join(out), sheet_w_in, sheet_h_in, invert)
 
 
 _font_cache = {}
