@@ -1,0 +1,3 @@
+#!/bin/sh
+# Convenience wrapper: runs the tool with the project venv.
+exec "$(dirname "$0")/.venv/bin/python" "$(dirname "$0")/toolbox_labels.py" "$@"

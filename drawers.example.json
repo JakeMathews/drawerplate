@@ -1,0 +1,47 @@
+{
+  "drawer_width": 22.0,
+  "drawers": [
+    {
+      "name": "01-sockets-3-8",
+      "primary": {
+        "text": "SOCKETS",
+        "icon": "socket",
+        "icon_desc": "a hex socket for a socket wrench, standing upright, opening facing the viewer"
+      },
+      "secondary": {
+        "text": "3/8 DRIVE",
+        "icon": "ratchet",
+        "icon_desc": "a ratchet wrench with a long handle, head at the top"
+      }
+    },
+    {
+      "name": "02-wrenches",
+      "primary": {
+        "text": "WRENCHES",
+        "icon": "wrench",
+        "icon_desc": "a combination wrench / spanner, angled diagonally"
+      },
+      "secondary": {
+        "text": "METRIC",
+        "icon": "ruler",
+        "icon_desc": "a short ruler with a few thick measurement tick marks"
+      }
+    },
+    {
+      "name": "03-screwdrivers",
+      "primary": {
+        "text": "SCREWDRIVERS",
+        "icon": "screwdriver",
+        "icon_desc": "a flathead and a phillips screwdriver crossed in an X"
+      }
+    },
+    {
+      "name": "04-pliers",
+      "primary": {
+        "text": "PLIERS + CUTTERS",
+        "icon": "pliers",
+        "icon_desc": "a pair of slip joint pliers, jaws pointing up"
+      }
+    }
+  ]
+}

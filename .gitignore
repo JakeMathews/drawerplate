@@ -1,0 +1,14 @@
+# Secrets — the real key lives here and must never be committed
+openapi.env
+.env
+
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Generated labels and previews
+out/
+
+# Derived contact sheet (rebuild with: ./label icon sheet)
+icons/_sheet.svg
