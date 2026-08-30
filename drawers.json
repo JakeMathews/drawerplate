@@ -138,6 +138,11 @@
         "text": "JIGSAW",
         "icon": "jigsaw",
         "icon_desc": "a jigsaw power tool seen from the side facing left, a tall body with a rounded D-shaped grip handle on top, a flat base plate underneath and a short straight saw blade pointing down at the front"
+      },
+      "secondary": {
+        "text": "HELICOIL",
+        "icon": "helicoil",
+        "icon_desc": "a helicoil wire thread insert standing upright, a short cylindrical coil of thick diamond shaped wire wound in a few even spiral turns like a stretched spring, with a small straight tang sticking out at the bottom"
       }
     },
     {
