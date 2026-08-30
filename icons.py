@@ -5,6 +5,7 @@ Cached icons are stored normalized: the path is expressed in a coordinate space
 """
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -95,8 +96,16 @@ def _request_image(desc, api_key, quality, size, style):
     return base64.b64decode(r.json()["data"][0]["b64_json"])
 
 
-def _binarize(png_bytes, threshold):
-    im = Image.open(BytesIO(png_bytes)).convert("L")
+def _binarize(png_bytes, threshold, invert=False):
+    im = Image.open(BytesIO(png_bytes))
+    if im.mode in ("RGBA", "LA", "P"):
+        im = im.convert("RGBA")
+        # Transparent pixels are background, which is black in an inverted source.
+        bg = Image.new("RGBA", im.size, (0, 0, 0, 255) if invert else (255,) * 4)
+        im = Image.alpha_composite(bg, im)
+    im = im.convert("L")
+    if invert:
+        im = ImageOps.invert(im)
     im = ImageOps.expand(im, border=max(8, im.width // 40), fill=255)
     return im.point(lambda p: 255 if p >= threshold else 0, "L").convert("1")
 
@@ -145,10 +154,42 @@ def _normalize(cmds):
     return cmds, (x1 - x0) / h
 
 
-def vectorize(png_bytes, threshold=128, turdsize=150, alphamax=1.0, opttolerance=0.2):
-    bw = _binarize(png_bytes, threshold)
+def vectorize(png_bytes, threshold=128, turdsize=150, alphamax=1.0, opttolerance=0.2,
+              invert=False):
+    bw = _binarize(png_bytes, threshold, invert)
     cmds, aspect = _normalize(_flatten_potrace(_potrace(bw, turdsize, alphamax, opttolerance)))
     return svgpath.serialize(cmds), aspect
+
+
+def _digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def portable_source(p):
+    """Store the source path relative to the repo or home, so caches stay shareable."""
+    p = Path(p).expanduser().resolve()
+    for base, prefix in ((ICON_DIR.parent, ""), (Path.home(), "~/")):
+        try:
+            return prefix + str(p.relative_to(base))
+        except ValueError:
+            pass
+    return str(p)
+
+
+def resolve_source(s):
+    p = Path(s).expanduser()
+    return p if p.is_absolute() else ICON_DIR.parent / p
+
+
+def stale_source(slug, meta=None):
+    """Return the source path if an imported icon's file has changed since tracing."""
+    meta = meta or load(slug)
+    if not meta or not meta.get("source"):
+        return None
+    src = resolve_source(meta["source"])
+    if not src.exists():
+        return None
+    return src if _digest(src) != meta.get("source_sha256") else None
 
 
 def icon_files(slug):
@@ -162,19 +203,18 @@ def load(slug):
     return json.loads(meta.read_text())
 
 
-def save(slug, desc, png_bytes, path_d, aspect, trace_opts, style):
+def save(slug, desc, png_bytes, path_d, aspect, trace_opts, style,
+         source=None, source_sha256=None):
     ICON_DIR.mkdir(exist_ok=True)
     meta, png, svg = icon_files(slug)
     if png_bytes is not None:
         png.write_bytes(png_bytes)
-    meta.write_text(
-        json.dumps(
-            {"slug": slug, "description": desc, "style": style, "aspect": aspect,
-             "trace": trace_opts, "path": path_d},
-            indent=2,
-        )
-        + "\n"
-    )
+    record = {"slug": slug, "description": desc, "style": style, "aspect": aspect,
+              "trace": trace_opts, "path": path_d}
+    if source:
+        record["source"] = source
+        record["source_sha256"] = source_sha256
+    meta.write_text(json.dumps(record, indent=2) + "\n")
     w = round(NORM_HEIGHT * aspect, 3)
     svg.write_text(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {NORM_HEIGHT:.0f}" '
@@ -182,6 +222,39 @@ def save(slug, desc, png_bytes, path_d, aspect, trace_opts, style):
         f'<path fill="#000" fill-rule="nonzero" d="{path_d}"/></svg>\n'
     )
     return meta
+
+
+def import_file(slug, src, desc=None, **trace):
+    """Trace a local image into the icon cache. No API call."""
+    src = Path(src)
+    if not src.exists():
+        raise SystemExit(f"no such file: {src}")
+    buf = BytesIO()
+    Image.open(src).save(buf, "PNG")
+    png_bytes = buf.getvalue()
+
+    path_d, aspect = vectorize(png_bytes, **trace)
+    cat = read_catalog()
+    desc = desc or cat.get(slug) or f"traced from {src.name}"
+    save(slug, desc, png_bytes, path_d, aspect, trace, "imported",
+         source=portable_source(src), source_sha256=_digest(src))
+    cat[slug] = desc
+    write_catalog(cat)
+    return load(slug)
+
+
+def refresh(slug, meta=None):
+    """Retrace an imported icon if its source file changed. Returns new meta, or None.
+
+    The stored trace options are reused rather than whatever the caller passed, so a
+    plain `bins` run can't silently re-cut an icon at different settings.
+    """
+    meta = meta or load(slug)
+    src = stale_source(slug, meta)
+    if not src:
+        return None
+    print(f"  source changed, retracing '{slug}' from {src.name}")
+    return import_file(slug, src, meta.get("description"), **meta.get("trace", {}))
 
 
 def ensure(slug, desc=None, regen=False, quality="high", size="1024x1024",
@@ -192,7 +265,7 @@ def ensure(slug, desc=None, regen=False, quality="high", size="1024x1024",
     existing = load(slug)
 
     if existing and not regen:
-        return existing
+        return refresh(slug, existing) or existing
     if not desc:
         raise SystemExit(f"Icon '{slug}' is not cached and has no description. "
                          f"Pass --icon-desc or add it to icons/catalog.json.")

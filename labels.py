@@ -31,6 +31,30 @@ def drawer_preview(entries, drawer_width_in, label_height_in=0.75, margin_in=0.1
         f'<g fill="#ffffff" fill-rule="nonzero">{"".join(groups)}</g></svg>\n'
     )
 
+def tile_sheet(cells, cell_w_in, cell_h_in, cols, invert=False):
+    """Tile fixed-size label cells into one exact-size sheet SVG.
+
+    cells is a list of path lists as returned by build_bin_label.
+    """
+    rows = (len(cells) + cols - 1) // cols
+    cw, ch = cell_w_in * PX_PER_IN, cell_h_in * PX_PER_IN
+    W, H = cols * cw, rows * ch
+    groups = []
+    for i, paths in enumerate(cells):
+        x, y = (i % cols) * cw, (i // cols) * ch
+        d = "".join(p for _, p in paths)
+        groups.append(f'<g transform="translate({x:.3f},{y:.3f})"><path d="{d}"/></g>')
+    back = '<rect width="100%" height="100%" fill="#111111"/>' if invert else ""
+    ink = "#ffffff" if invert else "#000000"
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
+        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+        f'width="{cols * cell_w_in:.4f}in" height="{rows * cell_h_in:.4f}in" '
+        f'viewBox="0 0 {W:.3f} {H:.3f}">{back}'
+        f'<g fill="{ink}" fill-rule="nonzero" stroke="none">{"".join(groups)}</g></svg>\n'
+    )
+
+
 _font_cache = {}
 
 
@@ -83,6 +107,76 @@ def _icon_commands(icon, height_px):
     x0, y0, x1, y1 = svgpath.bbox(cmds)
     cmds = svgpath.transform(cmds, 1, 0, 0, 1, -x0, -y0)
     return cmds, (x1 - x0)
+
+
+def build_bin_label(
+    text,
+    icon=None,
+    width_in=6.0,
+    height_in=4.0,
+    cap_height_in=0.4,
+    icon_height_in=2.2,
+    gap_in=0.25,
+    pad_in=0.25,
+    tracking_em=0.0,
+    font_path=FONT_PATH,
+):
+    """Return (svg, paths, width_in, height_in) for a bin label: text stacked over icon.
+
+    Unlike a drawer label the canvas is a fixed cell; content is centered in it both
+    ways so a shelf of bins lines up without measuring anything on import.
+    """
+    W, H = width_in * PX_PER_IN, height_in * PX_PER_IN
+    gap = gap_in * PX_PER_IN
+    avail_w = W - 2 * pad_in * PX_PER_IN
+
+    icon_cmds, icon_w, icon_h = None, 0.0, 0.0
+    if icon:
+        icon_h = icon_height_in * PX_PER_IN
+        icon_cmds, icon_w = _icon_commands(icon, icon_h)
+        if icon_w > avail_w:
+            shrink = avail_w / icon_w
+            icon_h *= shrink
+            icon_cmds, icon_w = _icon_commands(icon, icon_h)
+
+    raw, cap_units = text_outline(text, font_path, tracking_em)
+    ink = svgpath.bbox(raw) if raw else None
+    scale = (cap_height_in * PX_PER_IN) / cap_units
+    if ink and (ink[2] - ink[0]) * scale > avail_w:
+        scale *= avail_w / ((ink[2] - ink[0]) * scale)
+        print(f"  shrank text to fit: cap height {scale * cap_units / PX_PER_IN:.3f}in")
+    text_w = (ink[2] - ink[0]) * scale if ink else 0.0
+    text_h = (ink[3] - ink[1]) * scale if ink else 0.0
+
+    block_h = text_h + icon_h + (gap if text_h and icon_h else 0.0)
+    if block_h > H:
+        raise SystemExit(
+            f"content is {block_h / PX_PER_IN:.2f}in tall but the cell is {height_in}in; "
+            "lower --icon-height or --cap-height"
+        )
+    top = (H - block_h) / 2
+
+    paths = []
+    if raw:
+        baseline = top + ink[3] * scale
+        paths.append(("text", svgpath.serialize(svgpath.transform(
+            raw, scale, 0, 0, -scale, (W - text_w) / 2 - ink[0] * scale, baseline
+        ))))
+    if icon_cmds:
+        paths.append(("icon", svgpath.serialize(svgpath.transform(
+            icon_cmds, 1, 0, 0, 1, (W - icon_w) / 2, top + text_h + (gap if text_h else 0)
+        ))))
+
+    body = "\n  ".join(f'<path id="{name}" d="{d}"/>' for name, d in paths)
+    svg = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
+        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+        f'width="{width_in:.4f}in" height="{height_in:.4f}in" '
+        f'viewBox="0 0 {W:.3f} {H:.3f}">\n'
+        '  <g fill="#000000" fill-rule="nonzero" stroke="none">\n  '
+        f"{body}\n  </g>\n</svg>\n"
+    )
+    return svg, paths, width_in, height_in
 
 
 def build_label(

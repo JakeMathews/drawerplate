@@ -1,8 +1,11 @@
 {
+  "calipers": "a pair of digital vernier calipers viewed from the side, jaws closed, held horizontally",
   "pliers": "a pair of slip joint pliers, jaws pointing up",
   "ratchet": "a ratchet wrench with a long handle, head at the top",
+  "rebel500": "Honda Rebel 500 cruiser motorcycle, side view",
   "ruler": "a tape measure body with a short blade of tape sticking out to the right",
   "screwdriver": "a flathead and a phillips screwdriver crossed in an X",
   "socket": "a hex socket for a socket wrench, standing upright, opening facing the viewer",
-  "wrench": "a combination wrench / spanner, angled diagonally"
+  "wrench": "a combination wrench / spanner, angled diagonally",
+  "xsr900": "Yamaha XSR 900 naked sport motorcycle, side view"
 }
