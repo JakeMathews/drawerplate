@@ -1,0 +1,186 @@
+{
+  "drawer_width": 22.0,
+  "drawers": [
+    {
+      "name": "01-sockets",
+      "primary": {
+        "text": "SOCKETS",
+        "icon": "socket"
+      }
+    },
+    {
+      "name": "02-wrenches",
+      "primary": {
+        "text": "WRENCHES",
+        "icon": "wrench"
+      }
+    },
+    {
+      "name": "03-torque-wrenches",
+      "primary": {
+        "text": "TORQUE WRENCHES",
+        "icon": "torque-wrench",
+        "icon_desc": "a torque wrench seen from the side, long straight handle running left to right with a square drive head at the right end and a small dial gauge on the handle"
+      }
+    },
+    {
+      "name": "04-tap-die",
+      "primary": {
+        "text": "TAP & DIE",
+        "icon": "tap-die",
+        "icon_desc": "a thread cutting tap standing upright, a straight fluted cylindrical shank with a square drive at the top and sharp cutting threads along the lower half, next to a round threaded die disc lying flat behind it"
+      },
+      "secondary": {
+        "text": "EXTRACTORS",
+        "icon": "extractor"
+      }
+    },
+    {
+      "name": "05-hand-tools",
+      "primary": {
+        "text": "HAND TOOLS",
+        "icon": "pliers"
+      }
+    },
+    {
+      "name": "06-tape",
+      "primary": {
+        "text": "TAPE",
+        "icon": "tape-roll",
+        "icon_desc": "a roll of adhesive tape seen at a three-quarter angle, a thick ring with a large hole in the middle and a loose end of tape peeling off the right side"
+      },
+      "secondary": {
+        "text": "ADHESIVES",
+        "icon": "sticker",
+        "icon_desc": "a square adhesive sticker seen straight on, lying flat, with one bottom corner peeled up and curling back to show the underside, like a peel and stick label"
+      }
+    },
+    {
+      "name": "07-drills",
+      "primary": {
+        "text": "DRILLS",
+        "icon": "drill",
+        "icon_desc": "a cordless power drill seen from the side facing left, pistol grip with a battery pack at the bottom of the handle and a chuck with a drill bit at the front"
+      }
+    },
+    {
+      "name": "08-grinding",
+      "primary": {
+        "text": "GRINDING",
+        "icon": "angle-grinder",
+        "icon_desc": "an angle grinder seen from the side facing right, a fat cylindrical motor body with a round cutting disc and a half guard at the right end"
+      },
+      "secondary": {
+        "text": "CUTTING",
+        "icon": "recip-saw",
+        "icon_desc": "a reciprocating sawzall seen from the side facing right, a long horizontal barrel body with a grip handle at the left end and a straight toothed saw blade sticking out the right end"
+      }
+    },
+    {
+      "name": "09-band-saw",
+      "primary": {
+        "text": "BAND SAW",
+        "icon": "bandsaw",
+        "icon_desc": "a handheld deep-cut portable band saw, angular side view, rectangular body with a large square cutting throat punched through it, blade running down the left of the throat, pistol grip at the lower right and a bar handle on top"
+      }
+    },
+    {
+      "name": "10-circular-saw",
+      "primary": {
+        "text": "CIRCULAR SAW",
+        "icon": "circular-saw",
+        "icon_desc": "a circular saw seen from the side facing left, a large round toothed blade with a curved blade guard over the top, a motor body behind it and a handle on top"
+      }
+    },
+    {
+      "name": "11-hammers",
+      "primary": {
+        "text": "HAMMERS",
+        "icon": "hammer",
+        "icon_desc": "a claw hammer standing upright with the head at the top, a thick straight handle and a chunky head with a flat striking face on the right and a curved claw on the left"
+      }
+    },
+    {
+      "name": "12-inspection",
+      "primary": {
+        "text": "INSPECTION",
+        "icon": "multimeter",
+        "icon_desc": "a handheld digital multimeter standing upright, a rounded rectangular body with a wide display screen at the top, a round selector dial below it, and two test probe leads trailing from the bottom"
+      }
+    },
+    {
+      "name": "13-dremel",
+      "primary": {
+        "text": "DREMEL",
+        "icon": "rotary-tool",
+        "icon_desc": "a rotary tool held like a pen, a long cylindrical body lying diagonally with a tapered nose collet at the lower right and a small round cutting wheel mounted in it"
+      }
+    },
+    {
+      "name": "14-safety",
+      "primary": {
+        "text": "SAFETY",
+        "icon": "safety-glasses",
+        "icon_desc": "a pair of wraparound safety glasses seen straight on from the front, one wide continuous lens across both eyes with thick temple arms sweeping back on each side"
+      }
+    },
+    {
+      "name": "15-spray-gun",
+      "primary": {
+        "text": "SPRAY GUN",
+        "icon": "spray-gun",
+        "icon_desc": "an HVLP paint spray gun seen from the side facing left, a pistol grip body with a trigger, a round nozzle at the front and a cylindrical paint cup mounted underneath"
+      }
+    },
+    {
+      "name": "16-jigsaw",
+      "primary": {
+        "text": "JIGSAW",
+        "icon": "jigsaw",
+        "icon_desc": "a jigsaw power tool seen from the side facing left, a tall body with a rounded D-shaped grip handle on top, a flat base plate underneath and a short straight saw blade pointing down at the front"
+      }
+    },
+    {
+      "name": "17-router",
+      "primary": {
+        "text": "ROUTER",
+        "icon": "router-tool",
+        "icon_desc": "a compact wood router seen from the side, a tall cylindrical motor body sitting on a wide flat round base with a router bit pointing down through the middle of the base"
+      }
+    },
+    {
+      "name": "18-fasteners",
+      "primary": {
+        "text": "FASTENERS",
+        "icon": "fastener",
+        "icon_desc": "a hex head bolt standing upright with the six sided head at the top and a long threaded shank below it, with a matching hex nut threaded onto the middle of the shank"
+      }
+    },
+    {
+      "name": "19-solvents",
+      "primary": {
+        "text": "SOLVENTS",
+        "icon": "spray-can",
+        "icon_desc": "an aerosol spray can standing upright, a tall straight sided cylinder body with a flat top cap and a push button nozzle on top, spraying a small fan of mist up and to the right"
+      },
+      "secondary": {
+        "text": "GLUE",
+        "icon": "glue-bottle",
+        "icon_desc": "a bottle of glue standing upright, a rounded squeeze bottle body with a tall pointed conical applicator nozzle cap on top and a single fat drop of glue falling from the tip"
+      }
+    },
+    {
+      "name": "20-dowels-jigs",
+      "primary": {
+        "text": "DOWELS & JIGS",
+        "icon": "dowel",
+        "icon_desc": "three short cylindrical wooden dowel pins lying side by side in a row, each a plain rounded rod with fluted grooves running along its length, seen from the side"
+      },
+      "secondary": {
+        "text": "POCKET HOLES",
+        "icon": "pocket-hole",
+        "icon_desc": "a pocket hole jig block, a chunky rectangular block seen from the side with two steep angled guide holes bored diagonally down through it, and a drill bit entering the upper hole at an angle"
+      }
+    }
+  ]
+}

@@ -109,6 +109,38 @@ def _icon_commands(icon, height_px):
     return cmds, (x1 - x0)
 
 
+_KAPPA = 0.5522847498307936
+
+
+def _rounded_rect(x, y, w, h, r, ccw=False):
+    """Absolute M/L/C/Z path for a rounded rectangle. Reverse winding cuts a hole."""
+    r = max(0.0, min(r, w / 2, h / 2))
+    k = r * _KAPPA
+    x1, y1 = x + w, y + h
+    if not ccw:
+        return (
+            f"M{x + r:.3f},{y:.3f}"
+            f"L{x1 - r:.3f},{y:.3f}"
+            f"C{x1 - r + k:.3f},{y:.3f} {x1:.3f},{y + r - k:.3f} {x1:.3f},{y + r:.3f}"
+            f"L{x1:.3f},{y1 - r:.3f}"
+            f"C{x1:.3f},{y1 - r + k:.3f} {x1 - r + k:.3f},{y1:.3f} {x1 - r:.3f},{y1:.3f}"
+            f"L{x + r:.3f},{y1:.3f}"
+            f"C{x + r - k:.3f},{y1:.3f} {x:.3f},{y1 - r + k:.3f} {x:.3f},{y1 - r:.3f}"
+            f"L{x:.3f},{y + r:.3f}"
+            f"C{x:.3f},{y + r - k:.3f} {x + r - k:.3f},{y:.3f} {x + r:.3f},{y:.3f}Z"
+        )
+    return (
+        f"M{x + r:.3f},{y:.3f}"
+        f"C{x + r - k:.3f},{y:.3f} {x:.3f},{y + r - k:.3f} {x:.3f},{y + r:.3f}"
+        f"L{x:.3f},{y1 - r:.3f}"
+        f"C{x:.3f},{y1 - r + k:.3f} {x + r - k:.3f},{y1:.3f} {x + r:.3f},{y1:.3f}"
+        f"L{x1 - r:.3f},{y1:.3f}"
+        f"C{x1 - r + k:.3f},{y1:.3f} {x1:.3f},{y1 - r + k:.3f} {x1:.3f},{y1 - r:.3f}"
+        f"L{x1:.3f},{y + r:.3f}"
+        f"C{x1:.3f},{y + r - k:.3f} {x1 - r + k:.3f},{y:.3f} {x1 - r:.3f},{y:.3f}Z"
+    )
+
+
 def build_bin_label(
     text,
     icon=None,
@@ -184,18 +216,39 @@ def build_label(
     icon=None,
     side="primary",
     label_height_in=0.75,
-    cap_height_in=0.5,
-    icon_height_in=0.75,
+    cap_height_in=None,
+    icon_height_in=None,
     gap_in=0.12,
     pad_in=0.0,
     tracking_em=0.0,
     max_width_in=None,
+    border_px=1.0,
+    inset_px=5.0,
+    corner_radius_in=0.09,
     font_path=FONT_PATH,
 ):
-    """Return (svg_string, width_in, height_in). Icon prefixes primary, suffixes secondary."""
+    """Return (svg_string, width_in, height_in). Icon prefixes primary, suffixes secondary.
+
+    A border_px-wide rounded frame rings the label, held inset_px clear of the content.
+    Icon and cap height both default to whatever that leaves, so the two match and fill
+    the label without touching the frame.
+    """
     H = label_height_in * PX_PER_IN
     gap = gap_in * PX_PER_IN
     pad = pad_in * PX_PER_IN
+    border = max(0.0, border_px)
+    inset = inset_px if border else 0.0
+    frame = pad + border + inset
+
+    content_h = H - 2 * frame
+    if content_h <= 0:
+        raise SystemExit(
+            f"border+inset take up more than the {label_height_in}in label height"
+        )
+    if cap_height_in is None:
+        cap_height_in = content_h / PX_PER_IN
+    if icon_height_in is None:
+        icon_height_in = content_h / PX_PER_IN
 
     icon_cmds, icon_w = (None, 0.0)
     if icon:
@@ -212,10 +265,10 @@ def build_label(
     scale, ink, text_w = lay_out(cap_height_in)
 
     if max_width_in is not None:
-        total = pad * 2 + text_w + (icon_w + gap if icon_cmds else 0.0)
+        total = frame * 2 + text_w + (icon_w + gap if icon_cmds else 0.0)
         limit = max_width_in * PX_PER_IN
         if total > limit and text_w > 0:
-            room = limit - (pad * 2 + (icon_w + gap if icon_cmds else 0.0))
+            room = limit - (frame * 2 + (icon_w + gap if icon_cmds else 0.0))
             if room <= 0:
                 raise SystemExit(f"--max-width {max_width_in}in leaves no room for text")
             cap_height_in *= room / text_w
@@ -223,16 +276,28 @@ def build_label(
             print(f"  shrank text to fit: cap height {cap_height_in:.3f}in")
 
     content_w = text_w + (icon_w + gap if icon_cmds else 0.0)
-    total_w = pad * 2 + content_w
+    total_w = frame * 2 + content_w
 
     if side == "primary":
-        icon_x, text_x = pad, pad + icon_w + gap
+        icon_x, text_x = frame, frame + icon_w + gap
     else:
-        text_x, icon_x = pad, pad + text_w + gap
+        text_x, icon_x = frame, frame + text_w + gap
     if not icon_cmds:
-        text_x = pad
+        text_x = frame
 
     paths = []
+    if border:
+        r = corner_radius_in * PX_PER_IN
+        paths.append((
+            "box",
+            _rounded_rect(pad, pad, total_w - 2 * pad, H - 2 * pad, r)
+            + _rounded_rect(
+                pad + border, pad + border,
+                total_w - 2 * (pad + border), H - 2 * (pad + border),
+                max(0.0, r - border), ccw=True,
+            ),
+        ))
+
     if icon_cmds:
         placed = svgpath.transform(
             icon_cmds, 1, 0, 0, 1, icon_x, (H - icon_height_in * PX_PER_IN) / 2

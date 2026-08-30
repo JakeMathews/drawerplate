@@ -26,13 +26,20 @@ def slugify(s):
 def add_style_args(p):
     g = p.add_argument_group("sizing")
     g.add_argument("--label-height", type=float, default=0.75, metavar="IN")
-    g.add_argument("--cap-height", type=float, default=0.5, metavar="IN",
-                   help="height of a capital letter (default 0.5)")
-    g.add_argument("--icon-height", type=float, default=0.75, metavar="IN")
+    g.add_argument("--cap-height", type=float, default=None, metavar="IN",
+                   help="height of a capital letter (default: fill inside the frame)")
+    g.add_argument("--icon-height", type=float, default=None, metavar="IN",
+                   help="icon height (default: match the cap height)")
+    g.add_argument("--border", type=float, default=1.0, metavar="PX",
+                   help="width of the rounded frame around the label (default 1, 0 omits it)")
+    g.add_argument("--inset", type=float, default=5.0, metavar="PX",
+                   help="clearance between the frame and the content (default 5)")
+    g.add_argument("--corner-radius", type=float, default=0.09, metavar="IN",
+                   help="corner rounding on the frame (default 0.09)")
     g.add_argument("--gap", type=float, default=0.12, metavar="IN",
                    help="space between icon and text (default 0.12)")
     g.add_argument("--pad", type=float, default=0.0, metavar="IN",
-                   help="blank margin on the outer edges (default 0)")
+                   help="blank margin outside the frame (default 0)")
     g.add_argument("--tracking", type=float, default=0.0, metavar="EM",
                    help="extra letter spacing in em (default 0)")
     g.add_argument("--max-width", type=float, default=None, metavar="IN",
@@ -92,6 +99,9 @@ def style_from(args):
         pad_in=args.pad,
         tracking_em=args.tracking,
         max_width_in=args.max_width,
+        border_px=args.border,
+        inset_px=args.inset,
+        corner_radius_in=args.corner_radius,
         font_path=args.font,
     )
 

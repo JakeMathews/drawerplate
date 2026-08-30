@@ -10,17 +10,23 @@ the text stacked over the icon. Every label carries a pictogram plus text set in
 label after that renders offline in milliseconds.
 
 ```
-▮ SOCKETS                                              3/8 DRIVE ▮
-└ primary: left justified, icon prefix    secondary: right justified, icon suffix ┘
+╭─────────────╮                                      ╭──────────────╮
+│ ▮ SOCKETS   │                                      │  3/8 DRIVE ▮ │
+╰─────────────╯                                      ╰──────────────╯
+ primary: left justified, icon prefix    secondary: right justified, icon suffix
 ```
+
+Each drawer label is ringed by a 1 px rounded frame held 5 px clear of the content, so
+the label reads as a plate and can be weeded as a positive or used as a stencil. Icon
+and cap height are equal and sized to whatever the frame leaves.
 
 ## Why the output is safe to cut
 
 - **Text is converted to outlines.** No font is referenced in the SVG, so Easy Cut
   Studio can't substitute a different face or reflow the metrics.
-- **Physically sized.** The SVG carries `width="3.3933in" height="0.7500in"` with a
-  matching 96 dpi `viewBox`. Verified by rendering at 300 dpi and measuring: the
-  label comes out 0.750 in tall to the pixel.
+- **Physically sized.** The SVG carries `width="4.1383in" height="0.7500in"` with a
+  matching 96 dpi `viewBox`. Verified by rendering at 1200 dpi and measuring: the
+  label comes out 0.750 in tall to the pixel, and the frame 0.010 in wide.
 - **Transforms are baked flat.** Every path is absolute `M`/`L`/`C`/`Z` in the
   label's own coordinate space — no nested `<g transform>` for the importer to
   mishandle.
@@ -187,11 +193,14 @@ Cached art lives in `icons/`:
 
 | flag | default | what it does |
 | --- | --- | --- |
-| `--cap-height` | `0.5in` | height of a capital letter |
-| `--icon-height` | `0.75in` | icon height |
+| `--cap-height` | fills the frame | height of a capital letter |
+| `--icon-height` | matches cap height | icon height |
 | `--label-height` | `0.75in` | canvas height, i.e. usable drawer height |
+| `--border` | `1px` | width of the rounded frame; `0` omits it |
+| `--inset` | `5px` | clearance between the frame and the content |
+| `--corner-radius` | `0.09in` | corner rounding on the frame |
 | `--gap` | `0.12in` | space between icon and text |
-| `--pad` | `0` | blank margin on the outer edges |
+| `--pad` | `0` | blank margin outside the frame |
 | `--tracking` | `0` | extra letter spacing, in em |
 | `--max-width` | — | shrink the text until the label fits this width |
 | `--no-upper` | — | keep text as typed instead of uppercasing |
@@ -217,8 +226,12 @@ about `0.38` if you want mixed case.
 ## Layout
 
 ```
-drawer primary:    [ pad ][ icon ][ gap ][ text ][ pad ]
-drawer secondary:  [ pad ][ text ][ gap ][ icon ][ pad ]
+drawer primary:    ╭─ border ────────────────────────────╮
+                   │ inset [ icon ][ gap ][ text ] inset │  0.75in
+                   ╰─────────────────────────────────────╯
+drawer secondary:  ╭─ border ────────────────────────────╮
+                   │ inset [ text ][ gap ][ icon ] inset │
+                   ╰─────────────────────────────────────╯
 
 bin:  ┌──────── 6in ────────┐
       │        text         │
@@ -228,9 +241,10 @@ bin:  ┌──────── 6in ────────┐
 ```
 
 For drawer labels, width is whatever the content needs and height is always the
-label height; content is trimmed to the ink, so `--pad 0` gives a label with no
-dead space at the ends. Bin labels are the opposite — a fixed cell with the
-content centered inside it.
+label height. The frame is emitted as a filled ring — an outer rounded rectangle
+plus a reversed inner one — not a stroke, so it stays an outline like everything
+else and Easy Cut Studio cuts both contours. Bin labels are the opposite shape and
+carry no frame: a fixed cell with the content centered inside it.
 
 ## Repo layout
 
