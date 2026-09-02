@@ -1,19 +1,131 @@
 {
-  "bin_width": 6.0,
-  "bin_height": 4.0,
+  "bin_width": 5.625,
+  "bin_height": 3.75,
   "sheet_width": 12.0,
+  "sheet_height": 14.0,
+  "sheet_margin": 0.25,
+  "gutter": 0.25,
   "bins": [
     {
       "name": "rebel-500",
       "text": "Honda Rebel 500",
+      "cut": false,
       "icon": "rebel500",
       "icon_desc": "a Honda Rebel 500 cruiser motorcycle seen from the side, facing left"
     },
     {
-      "name": "saturn-sky",
-      "text": "Saturn Sky",
+      "name": "saturn-sky-parts",
+      "text": "Saturn Sky Parts",
+      "icon": "saturn-sky-outline",
+      "icon_desc": "Saturn Sky roadster convertible in side profile, clean outline drawing"
+    },
+    {
+      "name": "saturn-sky-service",
+      "text": "Saturn Sky Service",
       "icon": "saturn-sky",
       "icon_desc": "Saturn Sky roadster convertible, three-quarter front view, MYSKY plate"
+    },
+    {
+      "name": "smelters",
+      "text": "Smelting Furnaces",
+      "icon": "smelter-furnace",
+      "icon_desc": "a small cylindrical metal foundry furnace standing upright on short legs, with a perforated body shell and a round lid with a lifting handle on top, and no burner pipe or tube of any kind attached to it"
+    },
+    {
+      "name": "crucibles",
+      "text": "Smelting Crucibles",
+      "icon": "crucible",
+      "icon_desc": "a foundry crucible, a tapered cylindrical graphite pot, gripped in a pair of long crucible tongs"
+    },
+    {
+      "name": "smelting-molds",
+      "text": "Smelting Molds",
+      "icon": "ingot-mold",
+      "icon_desc": "a cast iron ingot mold, a rectangular tray with several loaf shaped cavities, seen in three quarter view with one metal ingot beside it"
+    },
+    {
+      "name": "smelting-ppe",
+      "text": "Smelting PPE",
+      "icon": "foundry-ppe",
+      "icon_desc": "a foundry face shield with a full visor above a pair of long cuff leather gauntlet gloves crossed at the wrists"
+    },
+    {
+      "name": "smelting-tools",
+      "text": "Smelting Tools",
+      "icon": "foundry-tools",
+      "icon_desc": "a pair of long foundry tongs crossed with a slag skimmer ladle and a stirring rod"
+    },
+    {
+      "name": "fire-brick",
+      "text": "Smelting Fire Brick",
+      "icon": "fire-brick",
+      "icon_desc": "a stack of three rectangular refractory fire bricks, seen in three quarter view with visible thickness"
+    },
+    {
+      "name": "scrap-metal",
+      "text": "Smelting Scrap Metal",
+      "icon": "scrap-metal",
+      "icon_desc": "a bucket heaped with scrap brass offcuts, thick short bar ends and chunky angular metal pieces piled above the rim"
+    },
+    {
+      "name": "toaster-oven",
+      "text": "Smelting Toaster Oven",
+      "icon": "toaster-oven",
+      "icon_desc": "a countertop toaster oven seen from the front, rectangular body with a glass door, a wire rack inside and a control knob on the right"
+    },
+    {
+      "name": "john-deere",
+      "text": "John Deere Z535M",
+      "icon": "z535m",
+      "icon_desc": "John Deere Z535M zero-turn riding mower with bagger, three-quarter side view"
+    },
+    {
+      "name": "lawn-fluids",
+      "text": "Lawn Fluids",
+      "icon": "fluid-bottles",
+      "icon_desc": "three small engine fluid bottles of different heights standing in a row, a quart oil bottle, a coolant jug and a narrow fuel treatment bottle"
+    },
+    {
+      "name": "fuel-pumps",
+      "text": "Fuel Pumps",
+      "icon": "siphon-pump",
+      "icon_desc": "a hand siphon transfer pump, a straight pump barrel with a ribbed flexible hose looping down from it"
+    },
+    {
+      "name": "sprinklers",
+      "text": "Sprinklers",
+      "icon": "sprinkler",
+      "icon_desc": "a lawn impact sprinkler on a sled base, with the swinging arm and nozzle, throwing an arc of water droplets"
+    },
+    {
+      "name": "car-wash-chemicals",
+      "text": "Car Wash Chemicals",
+      "icon": "car-chemicals",
+      "icon_desc": "a trigger spray bottle beside a tall blank jug of car wash soap and a squat round tub of wax, all containers completely blank with no labels or writing"
+    },
+    {
+      "name": "car-wash-rags",
+      "text": "Car Wash Rags",
+      "icon": "wash-rags",
+      "icon_desc": "a folded stack of microfiber towels with a wash mitt resting on top"
+    },
+    {
+      "name": "spray-paint",
+      "text": "Spray Paint",
+      "icon": "spray-paint",
+      "icon_desc": "an aerosol spray paint can standing upright with the cap on, seen from the front, spraying a short fan of mist to the right"
+    },
+    {
+      "name": "logging",
+      "text": "Logging",
+      "icon": "logging",
+      "icon_desc": "a logging helmet with an integrated mesh face screen and ear muffs, above a felling axe and a splitting wedge"
+    },
+    {
+      "name": "outdoors",
+      "text": "Outdoors",
+      "icon": "outdoors",
+      "icon_desc": "a pair of trekking poles crossed over a pine tree silhouette"
     }
   ]
 }

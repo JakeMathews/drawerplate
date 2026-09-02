@@ -34,6 +34,18 @@ _COMMON = """
 - No text, no letters, no numbers, no watermark.
 - Leave a small even white margin around the subject."""
 
+_BIN_COMMON = """
+- Only two colors: pure solid black on a pure white background.
+- No gray, no gradients, no shading, no texture, no drop shadow, no 3D.
+- No border, no frame, no circle or badge behind the subject. Plain white background.
+- One single centered subject.
+- The finished art is printed 3 inches tall, so it should carry real detail: draw the
+  parts that identify the object, not a generic outline. Keep every black shape and
+  every white gap at least as thick as 1/50th of the subject's height, so it survives
+  being weeded out of cut vinyl by hand.
+- No text, no letters, no numbers, no watermark.
+- Leave a small even white margin around the subject."""
+
 PROMPTS = {
     "solid": """Simple bold cartoon clip-art pictogram of {desc}.
 
@@ -51,6 +63,14 @@ coloring-book sticker. Every stroke must be extremely thick and uniform.
 
 STRICT REQUIREMENTS:"""
     + _COMMON,
+    "bin": """A two-color vinyl decal of {desc}.
+
+Draw the subject as a PREDOMINANTLY SOLID BLACK MASS, with white shapes knocked out of
+it to carry the detail. Do not draw a white subject with thin black outlines. The
+silhouette should be accurate and specific to this exact object.
+
+STRICT REQUIREMENTS:"""
+    + _BIN_COMMON,
 }
 
 
