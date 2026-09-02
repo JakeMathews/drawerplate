@@ -43,19 +43,27 @@ def _sheet_svg(body, w_in, h_in, invert):
     )
 
 
-def tile_sheet(cells, cell_w_in, cell_h_in, cols, invert=False):
+def tile_sheet(cells, cell_w_in, cell_h_in, cols, invert=False, margin_in=0.0,
+               gutter_in=0.0):
     """Tile fixed-size label cells into one exact-size sheet SVG.
 
     cells is a list of path lists as returned by build_bin_label.
     """
     rows = (len(cells) + cols - 1) // cols
-    cw, ch = cell_w_in * PX_PER_IN, cell_h_in * PX_PER_IN
+    cw = (cell_w_in + gutter_in) * PX_PER_IN
+    ch = (cell_h_in + gutter_in) * PX_PER_IN
+    m = margin_in * PX_PER_IN
     groups = []
     for i, paths in enumerate(cells):
-        x, y = (i % cols) * cw, (i // cols) * ch
+        x, y = m + (i % cols) * cw, m + (i // cols) * ch
         d = "".join(p for _, p in paths)
         groups.append(f'<g transform="translate({x:.3f},{y:.3f})"><path d="{d}"/></g>')
-    return _sheet_svg("".join(groups), cols * cell_w_in, rows * cell_h_in, invert)
+    return _sheet_svg(
+        "".join(groups),
+        cols * cell_w_in + (cols - 1) * gutter_in + 2 * margin_in,
+        rows * cell_h_in + (rows - 1) * gutter_in + 2 * margin_in,
+        invert,
+    )
 
 
 def nest(items, sheet_w_in, sheet_h_in, label_h_in, gutter_in, margin_in):

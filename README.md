@@ -116,10 +116,24 @@ ink. `bin` renders exactly that.
         --icon-desc "a Honda Rebel 500 cruiser motorcycle seen from the side, facing left"
 ```
 
-The cell defaults to **6 x 4 in**, and labels are tiled onto **12 in** sheets —
-two across — matching stock vinyl width. Writes `out/bins/<name>.svg` for each
-label plus `sheet-NN.svg` (what you cut) and `sheet-NN.png` (white-on-black
-preview).
+The cell defaults to **6 x 4 in**, and labels are tiled onto **12 x 14 in**
+sheets with a 0.25in margin around the sheet and a 0.25in gutter between labels,
+so every part has clear space to weed and cut into. Writes `out/bins/<name>.svg`
+for each individual label, and the tiled sheets to their own `out/bin-sheets/` —
+`sheet-NN.svg` (what you cut) and `sheet-NN.png` (white-on-black preview). A
+partial last sheet is trimmed to the rows it actually uses. `sheet_width`,
+`sheet_height`, `sheet_margin` and `gutter` can be set in the JSON alongside
+`bin_width`.
+
+Note that the cell has to divide the *usable* area, not the sheet: a 6 x 4 cell
+tiles a bare 12in width exactly, so asking for any margin or gutter at that size
+costs a whole column and halves the sheet. `bins.json` uses **5.625 x 3.75**
+instead — the same 3:2 cell scaled down 6% — so 2 x 3 of them fit inside the
+margin and gutter. The layout is pinned to fractions of the cell height, so the
+composition is identical, just proportionally smaller.
+
+Set `"cut": false` on a bin to render its individual label but keep it off the
+sheets — useful once a label is already cut and stuck on the bin.
 
 ```sh
 ./label bins bins.json
@@ -227,10 +241,12 @@ Cached art lives in `icons/`:
 | `--no-sheets` | — | render the labels but skip the sheets |
 
 `bin` takes the same flags but with defaults sized for a shelf bin: `--pad 0.25`,
-`--bin-width 6`, `--bin-height 4`, and `--sheet-width 12`. It also defaults to
-`--icon-style outline` rather than `solid` — at 3 in tall the narrow white
-channels that make outline art unweedable on a 0.75 in drawer label are wide
-enough to lift cleanly.
+`--bin-width 6`, `--bin-height 4`, `--sheet-width 12`, `--sheet-height 14`,
+`--sheet-margin 0.25`, and `--gutter 0.25`.
+It also defaults to `--icon-style bin` rather than `solid` — at 3 in tall the art
+can carry real identifying detail, so the prompt asks for a solid black mass with
+white knockouts instead of the radically simplified pictogram a 0.75 in drawer
+label needs.
 
 `--cap-height` and `--icon-height` default to fractions of the cell height rather
 than to fixed inches, so a bin printed at any size keeps the same composition.

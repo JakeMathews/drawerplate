@@ -83,7 +83,13 @@ def add_bin_args(p):
     g.add_argument("--upper", action="store_true", help="uppercase the text")
     g.add_argument("--sheet-width", type=float, default=12.0, metavar="IN",
                    help="stock vinyl width to tile labels across (default 12)")
-    add_trace_args(p, icon_style="outline")
+    g.add_argument("--sheet-height", type=float, default=14.0, metavar="IN",
+                   help="stock vinyl height to tile labels down (default 14)")
+    g.add_argument("--sheet-margin", type=float, default=0.25, metavar="IN",
+                   help="blank margin around the sheet edge (default 0.25)")
+    g.add_argument("--gutter", type=float, default=0.25, metavar="IN",
+                   help="blank space between tiled labels (default 0.25)")
+    add_trace_args(p, icon_style="bin")
 
 
 def add_trace_args(p, icon_style="solid"):
@@ -273,17 +279,30 @@ def emit_bin(spec, args, out_path):
 
 
 def write_bin_sheets(cells, args, stem):
-    cols = max(1, int(args.sheet_width // args.bin_width))
-    for i in range(0, len(cells), cols):
-        chunk = cells[i:i + cols]
-        n = i // cols + 1
+    m, g = args.sheet_margin, args.gutter
+    fits = lambda stock, cell: max(1, int((stock - 2 * m + g + 1e-9) // (cell + g)))
+    cols = fits(args.sheet_width, args.bin_width)
+    rows = fits(args.sheet_height, args.bin_height)
+    per_sheet = cols * rows
+    print(f"sheets ({args.sheet_width:g} x {args.sheet_height:g} in, {m:g}in margin, "
+          f"{g:g}in gutter, {cols} x {rows} bins):")
+    stem.parent.mkdir(parents=True, exist_ok=True)
+    # A shorter run leaves higher-numbered sheets behind; they'd look cuttable.
+    for old in stem.parent.glob(f"{stem.name}-[0-9][0-9].*"):
+        if old.suffix in (".svg", ".png"):
+            old.unlink()
+    for i in range(0, len(cells), per_sheet):
+        chunk = cells[i:i + per_sheet]
+        n = i // per_sheet + 1
         sheet = stem.parent / f"{stem.name}-{n:02d}.svg"
         sheet.write_text(
-            labels.tile_sheet(chunk, args.bin_width, args.bin_height, cols)
+            labels.tile_sheet(chunk, args.bin_width, args.bin_height, cols,
+                              margin_in=m, gutter_in=g)
         )
-        print(f"  sheet     -> {rel(sheet)}")
+        print(f"  sheet {n:02d}  {len(chunk):2d} labels  -> {rel(sheet)}")
         rasterize(
-            labels.tile_sheet(chunk, args.bin_width, args.bin_height, cols, invert=True),
+            labels.tile_sheet(chunk, args.bin_width, args.bin_height, cols,
+                              invert=True, margin_in=m, gutter_in=g),
             sheet.with_suffix(".png"),
         )
 
@@ -293,22 +312,27 @@ def cmd_bin(args):
     name = args.name or slugify(args.text)
     print(f"bin {name}:")
     cells = [emit_bin(spec, args, OUT_DIR / "bins" / f"{name}.svg")]
-    write_bin_sheets(cells, args, OUT_DIR / "bins" / f"{name}-sheet")
+    write_bin_sheets(cells, args, OUT_DIR / "bin-sheets" / f"{name}-sheet")
 
 
 def cmd_bins(args):
     data = json.loads(Path(args.file).read_text())
     specs = data["bins"] if isinstance(data, dict) else data
     if isinstance(data, dict):
-        for key in ("bin_width", "bin_height", "sheet_width"):
+        for key in ("bin_width", "bin_height", "sheet_width", "sheet_height",
+                    "sheet_margin", "gutter"):
             if data.get(key):
                 setattr(args, key, data[key])
     cells = []
     for spec in specs:
         name = spec.get("name") or slugify(spec["text"])
         print(f"bin {name}:")
-        cells.append(emit_bin(spec, args, OUT_DIR / "bins" / f"{name}.svg"))
-    write_bin_sheets(cells, args, OUT_DIR / "bins" / "sheet")
+        cell = emit_bin(spec, args, OUT_DIR / "bins" / f"{name}.svg")
+        if spec.get("cut", True):
+            cells.append(cell)
+        else:
+            print("  (already cut, kept off the sheets)")
+    write_bin_sheets(cells, args, OUT_DIR / "bin-sheets" / "sheet")
 
 
 def cmd_icon(args):
