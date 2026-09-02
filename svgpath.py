@@ -1,184 +1,215 @@
-"""Minimal SVG path engine: parse -> absolute M/L/C/Z, affine transform, exact bbox."""
+"""Minimal SVG path engine: parse -> absolute M/L/C/Z, affine transform, exact bounds."""
 
 import re
 
-_TOKEN_RE = re.compile(r"([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)")
-_NUM_RE = re.compile(r"[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?")
+_COMMAND_PATTERN = re.compile(r"([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)")
+_NUMBER_PATTERN = re.compile(r"[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?")
 
 
-def _chunks(seq, n):
-    for i in range(0, len(seq) - n + 1, n):
-        yield seq[i : i + n]
+def _groups_of(values, size):
+    for start in range(0, len(values) - size + 1, size):
+        yield values[start : start + size]
 
 
-def parse(d):
+def parse(path_data):
     """Return a flat list of absolute commands: ('M',p) ('L',p) ('C',c1,c2,p) ('Z',)."""
-    out = []
-    cur = start = (0.0, 0.0)
-    prev_cubic_ctrl = None
-    prev_quad_ctrl = None
+    commands = []
+    current = subpath_start = (0.0, 0.0)
+    previous_cubic_control = None
+    previous_quadratic_control = None
 
-    for m in _TOKEN_RE.finditer(d):
-        cmd = m.group(1)
-        nums = [float(x) for x in _NUM_RE.findall(m.group(2))]
-        rel = cmd.islower()
-        c = cmd.upper()
+    for match in _COMMAND_PATTERN.finditer(path_data):
+        letter = match.group(1)
+        numbers = [float(text) for text in _NUMBER_PATTERN.findall(match.group(2))]
+        is_relative = letter.islower()
+        kind = letter.upper()
 
-        if c == "Z":
-            out.append(("Z",))
-            cur = start
-            prev_cubic_ctrl = prev_quad_ctrl = None
+        if kind == "Z":
+            commands.append(("Z",))
+            current = subpath_start
+            previous_cubic_control = previous_quadratic_control = None
             continue
 
-        if c == "M":
-            for i, (x, y) in enumerate(_chunks(nums, 2)):
-                if rel:
-                    x, y = cur[0] + x, cur[1] + y
-                out.append(("M", (x, y)) if i == 0 else ("L", (x, y)))
-                if i == 0:
-                    start = (x, y)
-                cur = (x, y)
-            prev_cubic_ctrl = prev_quad_ctrl = None
+        if kind == "M":
+            for index, (x, y) in enumerate(_groups_of(numbers, 2)):
+                if is_relative:
+                    x, y = current[0] + x, current[1] + y
+                commands.append(("M", (x, y)) if index == 0 else ("L", (x, y)))
+                if index == 0:
+                    subpath_start = (x, y)
+                current = (x, y)
+            previous_cubic_control = previous_quadratic_control = None
 
-        elif c == "L":
-            for x, y in _chunks(nums, 2):
-                if rel:
-                    x, y = cur[0] + x, cur[1] + y
-                out.append(("L", (x, y)))
-                cur = (x, y)
-            prev_cubic_ctrl = prev_quad_ctrl = None
+        elif kind == "L":
+            for x, y in _groups_of(numbers, 2):
+                if is_relative:
+                    x, y = current[0] + x, current[1] + y
+                commands.append(("L", (x, y)))
+                current = (x, y)
+            previous_cubic_control = previous_quadratic_control = None
 
-        elif c in "HV":
-            for (v,) in _chunks(nums, 1):
-                if c == "H":
-                    x = cur[0] + v if rel else v
-                    y = cur[1]
+        elif kind in "HV":
+            for (distance,) in _groups_of(numbers, 1):
+                if kind == "H":
+                    x = current[0] + distance if is_relative else distance
+                    y = current[1]
                 else:
-                    x = cur[0]
-                    y = cur[1] + v if rel else v
-                out.append(("L", (x, y)))
-                cur = (x, y)
-            prev_cubic_ctrl = prev_quad_ctrl = None
+                    x = current[0]
+                    y = current[1] + distance if is_relative else distance
+                commands.append(("L", (x, y)))
+                current = (x, y)
+            previous_cubic_control = previous_quadratic_control = None
 
-        elif c == "C":
-            for x1, y1, x2, y2, x, y in _chunks(nums, 6):
-                if rel:
-                    x1, y1 = cur[0] + x1, cur[1] + y1
-                    x2, y2 = cur[0] + x2, cur[1] + y2
-                    x, y = cur[0] + x, cur[1] + y
-                out.append(("C", (x1, y1), (x2, y2), (x, y)))
-                cur, prev_cubic_ctrl = (x, y), (x2, y2)
-            prev_quad_ctrl = None
+        elif kind == "C":
+            for x1, y1, x2, y2, x, y in _groups_of(numbers, 6):
+                if is_relative:
+                    x1, y1 = current[0] + x1, current[1] + y1
+                    x2, y2 = current[0] + x2, current[1] + y2
+                    x, y = current[0] + x, current[1] + y
+                commands.append(("C", (x1, y1), (x2, y2), (x, y)))
+                current, previous_cubic_control = (x, y), (x2, y2)
+            previous_quadratic_control = None
 
-        elif c == "S":
-            for x2, y2, x, y in _chunks(nums, 4):
-                if rel:
-                    x2, y2 = cur[0] + x2, cur[1] + y2
-                    x, y = cur[0] + x, cur[1] + y
-                if prev_cubic_ctrl is None:
-                    x1, y1 = cur
+        elif kind == "S":
+            for x2, y2, x, y in _groups_of(numbers, 4):
+                if is_relative:
+                    x2, y2 = current[0] + x2, current[1] + y2
+                    x, y = current[0] + x, current[1] + y
+                if previous_cubic_control is None:
+                    x1, y1 = current
                 else:
-                    x1 = 2 * cur[0] - prev_cubic_ctrl[0]
-                    y1 = 2 * cur[1] - prev_cubic_ctrl[1]
-                out.append(("C", (x1, y1), (x2, y2), (x, y)))
-                cur, prev_cubic_ctrl = (x, y), (x2, y2)
-            prev_quad_ctrl = None
+                    x1 = 2 * current[0] - previous_cubic_control[0]
+                    y1 = 2 * current[1] - previous_cubic_control[1]
+                commands.append(("C", (x1, y1), (x2, y2), (x, y)))
+                current, previous_cubic_control = (x, y), (x2, y2)
+            previous_quadratic_control = None
 
-        elif c in "QT":
-            step = 4 if c == "Q" else 2
-            for vals in _chunks(nums, step):
-                if c == "Q":
-                    qx, qy, x, y = vals
-                    if rel:
-                        qx, qy = cur[0] + qx, cur[1] + qy
-                        x, y = cur[0] + x, cur[1] + y
+        elif kind in "QT":
+            values_per_curve = 4 if kind == "Q" else 2
+            for values in _groups_of(numbers, values_per_curve):
+                if kind == "Q":
+                    control_x, control_y, x, y = values
+                    if is_relative:
+                        control_x = current[0] + control_x
+                        control_y = current[1] + control_y
+                        x, y = current[0] + x, current[1] + y
                 else:
-                    x, y = vals
-                    if rel:
-                        x, y = cur[0] + x, cur[1] + y
-                    if prev_quad_ctrl is None:
-                        qx, qy = cur
+                    x, y = values
+                    if is_relative:
+                        x, y = current[0] + x, current[1] + y
+                    if previous_quadratic_control is None:
+                        control_x, control_y = current
                     else:
-                        qx = 2 * cur[0] - prev_quad_ctrl[0]
-                        qy = 2 * cur[1] - prev_quad_ctrl[1]
-                c1 = (cur[0] + 2 / 3 * (qx - cur[0]), cur[1] + 2 / 3 * (qy - cur[1]))
-                c2 = (x + 2 / 3 * (qx - x), y + 2 / 3 * (qy - y))
-                out.append(("C", c1, c2, (x, y)))
-                cur, prev_quad_ctrl = (x, y), (qx, qy)
-            prev_cubic_ctrl = None
+                        control_x = 2 * current[0] - previous_quadratic_control[0]
+                        control_y = 2 * current[1] - previous_quadratic_control[1]
+                first = (
+                    current[0] + 2 / 3 * (control_x - current[0]),
+                    current[1] + 2 / 3 * (control_y - current[1]),
+                )
+                second = (x + 2 / 3 * (control_x - x), y + 2 / 3 * (control_y - y))
+                commands.append(("C", first, second, (x, y)))
+                current, previous_quadratic_control = (x, y), (control_x, control_y)
+            previous_cubic_control = None
 
-        elif c == "A":
+        elif kind == "A":
             raise ValueError("elliptical arcs are not supported")
 
-    return out
+    return commands
 
 
-def transform(cmds, a, b, c, d, e, f):
-    """Apply the affine matrix [a b c d e f]. Cubics are affine-invariant."""
+def transform(commands, scale_x, skew_y, skew_x, scale_y, translate_x, translate_y):
+    """Apply an SVG affine matrix. Cubics are affine-invariant, so only points move."""
 
-    def pt(p):
-        return (a * p[0] + c * p[1] + e, b * p[0] + d * p[1] + f)
+    def move(point):
+        return (
+            scale_x * point[0] + skew_x * point[1] + translate_x,
+            skew_y * point[0] + scale_y * point[1] + translate_y,
+        )
 
-    return [(k[0],) + tuple(pt(p) for p in k[1:]) for k in cmds]
+    return [
+        (command[0],) + tuple(move(point) for point in command[1:])
+        for command in commands
+    ]
 
 
-def _cubic_axis_extrema(p0, p1, p2, p3):
-    vals = [p0, p3]
-    A = -p0 + 3 * p1 - 3 * p2 + p3
-    B = 2 * (p0 - 2 * p1 + p2)
-    C = p1 - p0
-    if abs(A) < 1e-12:
-        if abs(B) > 1e-12:
-            roots = [-C / B]
-        else:
-            roots = []
+def translate(commands, x_offset, y_offset):
+    return transform(commands, 1, 0, 0, 1, x_offset, y_offset)
+
+
+def _cubic_axis_extrema(start, control_one, control_two, end):
+    """One axis' values at the cubic's endpoints plus any interior turning point."""
+    values = [start, end]
+    # The derivative is the quadratic second_order*t^2 + first_order*t + constant.
+    second_order = -start + 3 * control_one - 3 * control_two + end
+    first_order = 2 * (start - 2 * control_one + control_two)
+    constant = control_one - start
+
+    if abs(second_order) < 1e-12:
+        roots = [-constant / first_order] if abs(first_order) > 1e-12 else []
     else:
-        disc = B * B - 4 * A * C
-        if disc < 0:
+        discriminant = first_order * first_order - 4 * second_order * constant
+        if discriminant < 0:
             roots = []
         else:
-            s = disc**0.5
-            roots = [(-B + s) / (2 * A), (-B - s) / (2 * A)]
-    for t in roots:
-        if 0 < t < 1:
-            u = 1 - t
-            vals.append(u**3 * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t**3 * p3)
-    return vals
+            spread = discriminant**0.5
+            roots = [
+                (-first_order + spread) / (2 * second_order),
+                (-first_order - spread) / (2 * second_order),
+            ]
+
+    for parameter in roots:
+        if 0 < parameter < 1:
+            remaining = 1 - parameter
+            values.append(
+                remaining**3 * start
+                + 3 * remaining * remaining * parameter * control_one
+                + 3 * remaining * parameter * parameter * control_two
+                + parameter**3 * end
+            )
+    return values
 
 
-def bbox(cmds):
-    xs, ys = [], []
-    cur = (0.0, 0.0)
-    for k in cmds:
-        if k[0] == "Z":
+def bounding_box(commands):
+    x_values, y_values = [], []
+    current = (0.0, 0.0)
+    for command in commands:
+        if command[0] == "Z":
             continue
-        if k[0] in ("M", "L"):
-            xs.append(k[1][0])
-            ys.append(k[1][1])
-            cur = k[1]
+        if command[0] in ("M", "L"):
+            x_values.append(command[1][0])
+            y_values.append(command[1][1])
+            current = command[1]
         else:
-            _, c1, c2, p = k
-            xs += _cubic_axis_extrema(cur[0], c1[0], c2[0], p[0])
-            ys += _cubic_axis_extrema(cur[1], c1[1], c2[1], p[1])
-            cur = p
-    if not xs:
+            _, control_one, control_two, end = command
+            x_values += _cubic_axis_extrema(
+                current[0], control_one[0], control_two[0], end[0]
+            )
+            y_values += _cubic_axis_extrema(
+                current[1], control_one[1], control_two[1], end[1]
+            )
+            current = end
+    if not x_values:
         return None
-    return (min(xs), min(ys), max(xs), max(ys))
+    return (min(x_values), min(y_values), max(x_values), max(y_values))
 
 
-def _n(v, prec):
-    s = f"{v:.{prec}f}"
-    if "." in s:
-        s = s.rstrip("0").rstrip(".")
-    return "0" if s == "-0" else s
+def _format_number(value, precision):
+    text = f"{value:.{precision}f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return "0" if text == "-0" else text
 
 
-def serialize(cmds, prec=3):
+def serialize(commands, precision=3):
     parts = []
-    for k in cmds:
-        if k[0] == "Z":
+    for command in commands:
+        if command[0] == "Z":
             parts.append("Z")
         else:
-            nums = " ".join(f"{_n(p[0], prec)} {_n(p[1], prec)}" for p in k[1:])
-            parts.append(f"{k[0]}{nums}")
+            numbers = " ".join(
+                f"{_format_number(point[0], precision)} "
+                f"{_format_number(point[1], precision)}"
+                for point in command[1:]
+            )
+            parts.append(f"{command[0]}{numbers}")
     return "".join(parts)

@@ -11,208 +11,251 @@ FONT_PATH = Path.home() / "Library/Fonts/JetBrainsMono-Bold.ttf"
 PX_PER_IN = 96.0
 
 
+def _joined_path_data(paths):
+    return "".join(path_data for _, path_data in paths)
+
+
 def drawer_preview(entries, drawer_width_in, label_height_in=0.75, margin_in=0.15):
     """Compose a white-on-black mock-up of a drawer front from placed label paths.
 
     entries is a list of (side, paths, width_in) as returned by build_label.
     """
-    W = drawer_width_in * PX_PER_IN
-    H = (label_height_in + 2 * margin_in) * PX_PER_IN
-    m = margin_in * PX_PER_IN
+    width_px = drawer_width_in * PX_PER_IN
+    height_px = (label_height_in + 2 * margin_in) * PX_PER_IN
+    margin_px = margin_in * PX_PER_IN
     groups = []
-    for side, paths, w_in in entries:
-        x = m if side == "primary" else W - m - w_in * PX_PER_IN
-        d = "".join(p for _, p in paths)
-        groups.append(f'<g transform="translate({x:.3f},{m:.3f})"><path d="{d}"/></g>')
+    for side, paths, label_width_in in entries:
+        x = margin_px if side == "primary" else (
+            width_px - margin_px - label_width_in * PX_PER_IN
+        )
+        groups.append(
+            f'<g transform="translate({x:.3f},{margin_px:.3f})">'
+            f'<path d="{_joined_path_data(paths)}"/></g>'
+        )
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.1f}" height="{H:.1f}" '
-        f'viewBox="0 0 {W:.3f} {H:.3f}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width_px:.1f}" '
+        f'height="{height_px:.1f}" '
+        f'viewBox="0 0 {width_px:.3f} {height_px:.3f}">'
         f'<rect width="100%" height="100%" fill="#111111"/>'
         f'<g fill="#ffffff" fill-rule="nonzero">{"".join(groups)}</g></svg>\n'
     )
 
-def _sheet_svg(body, w_in, h_in, invert):
-    back = '<rect width="100%" height="100%" fill="#111111"/>' if invert else ""
-    ink = "#ffffff" if invert else "#000000"
+
+def _sheet_svg(body, width_in, height_in, invert):
+    background = '<rect width="100%" height="100%" fill="#111111"/>' if invert else ""
+    ink_color = "#ffffff" if invert else "#000000"
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
         '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
-        f'width="{w_in:.4f}in" height="{h_in:.4f}in" '
-        f'viewBox="0 0 {w_in * PX_PER_IN:.3f} {h_in * PX_PER_IN:.3f}">{back}'
-        f'<g fill="{ink}" fill-rule="nonzero" stroke="none">{body}</g></svg>\n'
+        f'width="{width_in:.4f}in" height="{height_in:.4f}in" '
+        f'viewBox="0 0 {width_in * PX_PER_IN:.3f} {height_in * PX_PER_IN:.3f}">'
+        f'{background}'
+        f'<g fill="{ink_color}" fill-rule="nonzero" stroke="none">{body}</g></svg>\n'
     )
 
 
-def tile_sheet(cells, cell_w_in, cell_h_in, cols, invert=False, margin_in=0.0,
-               gutter_in=0.0):
+def tile_sheet(cells, cell_width_in, cell_height_in, columns, invert=False,
+               margin_in=0.0, gutter_in=0.0):
     """Tile fixed-size label cells into one exact-size sheet SVG.
 
     cells is a list of path lists as returned by build_bin_label.
     """
-    rows = (len(cells) + cols - 1) // cols
-    cw = (cell_w_in + gutter_in) * PX_PER_IN
-    ch = (cell_h_in + gutter_in) * PX_PER_IN
-    m = margin_in * PX_PER_IN
+    rows = (len(cells) + columns - 1) // columns
+    column_step_px = (cell_width_in + gutter_in) * PX_PER_IN
+    row_step_px = (cell_height_in + gutter_in) * PX_PER_IN
+    margin_px = margin_in * PX_PER_IN
     groups = []
-    for i, paths in enumerate(cells):
-        x, y = m + (i % cols) * cw, m + (i // cols) * ch
-        d = "".join(p for _, p in paths)
-        groups.append(f'<g transform="translate({x:.3f},{y:.3f})"><path d="{d}"/></g>')
+    for index, paths in enumerate(cells):
+        x = margin_px + (index % columns) * column_step_px
+        y = margin_px + (index // columns) * row_step_px
+        groups.append(
+            f'<g transform="translate({x:.3f},{y:.3f})">'
+            f'<path d="{_joined_path_data(paths)}"/></g>'
+        )
     return _sheet_svg(
         "".join(groups),
-        cols * cell_w_in + (cols - 1) * gutter_in + 2 * margin_in,
-        rows * cell_h_in + (rows - 1) * gutter_in + 2 * margin_in,
+        columns * cell_width_in + (columns - 1) * gutter_in + 2 * margin_in,
+        rows * cell_height_in + (rows - 1) * gutter_in + 2 * margin_in,
         invert,
     )
 
 
-def nest(items, sheet_w_in, sheet_h_in, label_h_in, gutter_in, margin_in):
+def nest(items, sheet_width_in, sheet_height_in, label_height_in, gutter_in, margin_in):
     """Shelf-pack fixed-height, variable-width labels onto sheets.
 
-    items is a list of (key, paths, width_in). All labels share one height, so rows
-    are uniform and only the horizontal fill varies — widest-first into the first row
-    with room. Returns a list of sheets, each a list of (key, paths, x_in, y_in).
+    items is a list of (key, paths, width_in). All labels share one height, so rows are
+    uniform and only the horizontal fill varies — widest-first into the first row with
+    room. Returns a list of sheets, each a list of (key, paths, x_in, y_in).
     """
-    usable_w = sheet_w_in - 2 * margin_in
-    usable_h = sheet_h_in - 2 * margin_in
-    rows_per_sheet = int((usable_h + gutter_in + 1e-9) // (label_h_in + gutter_in))
+    usable_width_in = sheet_width_in - 2 * margin_in
+    usable_height_in = sheet_height_in - 2 * margin_in
+    rows_per_sheet = int(
+        (usable_height_in + gutter_in + 1e-9) // (label_height_in + gutter_in)
+    )
     if rows_per_sheet < 1:
         raise SystemExit(
-            f"a {label_h_in}in label does not fit a {sheet_h_in}in sheet with "
+            f"a {label_height_in}in label does not fit a {sheet_height_in}in sheet with "
             f"{margin_in}in margins"
         )
-    too_wide = [k for k, _, w in items if w > usable_w]
+    too_wide = [key for key, _, width_in in items if width_in > usable_width_in]
     if too_wide:
         raise SystemExit(
-            f"wider than the {usable_w:.2f}in usable sheet width: {', '.join(too_wide)}"
+            f"wider than the {usable_width_in:.2f}in usable sheet width: "
+            f"{', '.join(too_wide)}"
         )
 
-    rows = []
-    for item in sorted(items, key=lambda it: -it[2]):
-        for row in rows:
-            if row[0] + gutter_in + item[2] <= usable_w:
-                row[0] += gutter_in + item[2]
-                row[1].append(item)
+    row_widths_in = []
+    row_contents = []
+    for item in sorted(items, key=lambda entry: -entry[2]):
+        item_width_in = item[2]
+        for row_index, filled_width_in in enumerate(row_widths_in):
+            if filled_width_in + gutter_in + item_width_in <= usable_width_in:
+                row_widths_in[row_index] += gutter_in + item_width_in
+                row_contents[row_index].append(item)
                 break
         else:
-            rows.append([item[2], [item]])
+            row_widths_in.append(item_width_in)
+            row_contents.append([item])
 
     sheets = []
-    for i in range(0, len(rows), rows_per_sheet):
+    for first_row in range(0, len(row_contents), rows_per_sheet):
         placed = []
-        for r, (_, row_items) in enumerate(rows[i:i + rows_per_sheet]):
-            x = margin_in
-            y = margin_in + r * (label_h_in + gutter_in)
-            for key, paths, w in row_items:
-                placed.append((key, paths, x, y))
-                x += w + gutter_in
+        sheet_rows = row_contents[first_row : first_row + rows_per_sheet]
+        for row_index, row_items in enumerate(sheet_rows):
+            x_in = margin_in
+            y_in = margin_in + row_index * (label_height_in + gutter_in)
+            for key, paths, width_in in row_items:
+                placed.append((key, paths, x_in, y_in))
+                x_in += width_in + gutter_in
         sheets.append(placed)
     return sheets
 
 
-def nest_sheet(placed, sheet_w_in, sheet_h_in, invert=False):
+def nest_sheet(placed, sheet_width_in, sheet_height_in, invert=False):
     """Render one packed sheet, baking each label's offset into its path data."""
-    out = []
+    rendered = []
     for _, paths, x_in, y_in in placed:
-        cmds = svgpath.parse("".join(p for _, p in paths))
-        cmds = svgpath.transform(cmds, 1, 0, 0, 1, x_in * PX_PER_IN, y_in * PX_PER_IN)
-        out.append(f'<path d="{svgpath.serialize(cmds)}"/>')
-    return _sheet_svg("".join(out), sheet_w_in, sheet_h_in, invert)
+        commands = svgpath.parse(_joined_path_data(paths))
+        commands = svgpath.translate(commands, x_in * PX_PER_IN, y_in * PX_PER_IN)
+        rendered.append(f'<path d="{svgpath.serialize(commands)}"/>')
+    return _sheet_svg("".join(rendered), sheet_width_in, sheet_height_in, invert)
 
 
 _font_cache = {}
 
 
-def _font(path=FONT_PATH):
+def _load_font(path=FONT_PATH):
     path = Path(path)
     if path not in _font_cache:
         if not path.exists():
             raise SystemExit(f"Font not found: {path}")
-        f = TTFont(str(path))
-        _font_cache[path] = (f, f.getBestCmap(), f.getGlyphSet())
+        font = TTFont(str(path))
+        _font_cache[path] = (font, font.getBestCmap(), font.getGlyphSet())
     return _font_cache[path]
 
 
 def _cap_height(font):
-    os2 = font.get("OS/2")
-    if os2 is not None and getattr(os2, "sCapHeight", 0):
-        return os2.sCapHeight
+    os2_table = font.get("OS/2")
+    if os2_table is not None and getattr(os2_table, "sCapHeight", 0):
+        return os2_table.sCapHeight
     return font["head"].unitsPerEm * 0.7
 
 
 def text_outline(text, font_path=FONT_PATH, tracking_em=0.0):
     """Return (outline commands in font units, cap height in font units). Y is up."""
-    font, cmap, glyphset = _font(font_path)
-    upem = font["head"].unitsPerEm
-    hmtx = font["hmtx"]
-    tracking = tracking_em * upem
-    cmds, pen_x, missing = [], 0.0, set()
+    font, character_map, glyph_set = _load_font(font_path)
+    units_per_em = font["head"].unitsPerEm
+    horizontal_metrics = font["hmtx"]
+    tracking_units = tracking_em * units_per_em
+    commands, pen_x, missing = [], 0.0, set()
 
-    for ch in text:
-        name = cmap.get(ord(ch))
-        if name is None:
-            missing.add(ch)
-            name = cmap.get(ord("?"))
-        pen = SVGPathPen(glyphset)
-        glyphset[name].draw(pen)
-        d = pen.getCommands()
-        if d:
-            cmds += svgpath.transform(svgpath.parse(d), 1, 0, 0, 1, pen_x, 0)
-        pen_x += hmtx[name][0] + tracking
+    for character in text:
+        glyph_name = character_map.get(ord(character))
+        if glyph_name is None:
+            missing.add(character)
+            glyph_name = character_map.get(ord("?"))
+        pen = SVGPathPen(glyph_set)
+        glyph_set[glyph_name].draw(pen)
+        path_data = pen.getCommands()
+        if path_data:
+            commands += svgpath.translate(svgpath.parse(path_data), pen_x, 0)
+        pen_x += horizontal_metrics[glyph_name][0] + tracking_units
 
     if missing:
         print(f"  warning: font has no glyph for {sorted(missing)}")
-    return cmds, _cap_height(font)
+    return commands, _cap_height(font)
 
 
 def _icon_commands(icon, height_px):
     """Scale a cached (normalized, y-down, 1000-tall) icon path to height_px."""
-    s = height_px / 1000.0
-    cmds = svgpath.transform(svgpath.parse(icon["path"]), s, 0, 0, s, 0, 0)
-    x0, y0, x1, y1 = svgpath.bbox(cmds)
-    cmds = svgpath.transform(cmds, 1, 0, 0, 1, -x0, -y0)
-    return cmds, (x1 - x0)
+    scale = height_px / 1000.0
+    commands = svgpath.transform(svgpath.parse(icon["path"]), scale, 0, 0, scale, 0, 0)
+    left, top, right, _ = svgpath.bounding_box(commands)
+    return svgpath.translate(commands, -left, -top), right - left
 
 
+# Offset that makes a cubic bezier approximate a quarter circle.
 _KAPPA = 0.5522847498307936
 
 
-def _rounded_rect(x, y, w, h, r, ccw=False):
+def _rounded_rect(x, y, width, height, radius, counter_clockwise=False):
     """Absolute M/L/C/Z path for a rounded rectangle. Reverse winding cuts a hole."""
-    r = max(0.0, min(r, w / 2, h / 2))
-    k = r * _KAPPA
-    x1, y1 = x + w, y + h
-    if not ccw:
+    radius = max(0.0, min(radius, width / 2, height / 2))
+    control = radius * _KAPPA
+    right, bottom = x + width, y + height
+    if not counter_clockwise:
         return (
-            f"M{x + r:.3f},{y:.3f}"
-            f"L{x1 - r:.3f},{y:.3f}"
-            f"C{x1 - r + k:.3f},{y:.3f} {x1:.3f},{y + r - k:.3f} {x1:.3f},{y + r:.3f}"
-            f"L{x1:.3f},{y1 - r:.3f}"
-            f"C{x1:.3f},{y1 - r + k:.3f} {x1 - r + k:.3f},{y1:.3f} {x1 - r:.3f},{y1:.3f}"
-            f"L{x + r:.3f},{y1:.3f}"
-            f"C{x + r - k:.3f},{y1:.3f} {x:.3f},{y1 - r + k:.3f} {x:.3f},{y1 - r:.3f}"
-            f"L{x:.3f},{y + r:.3f}"
-            f"C{x:.3f},{y + r - k:.3f} {x + r - k:.3f},{y:.3f} {x + r:.3f},{y:.3f}Z"
+            f"M{x + radius:.3f},{y:.3f}"
+            f"L{right - radius:.3f},{y:.3f}"
+            f"C{right - radius + control:.3f},{y:.3f} "
+            f"{right:.3f},{y + radius - control:.3f} {right:.3f},{y + radius:.3f}"
+            f"L{right:.3f},{bottom - radius:.3f}"
+            f"C{right:.3f},{bottom - radius + control:.3f} "
+            f"{right - radius + control:.3f},{bottom:.3f} {right - radius:.3f},{bottom:.3f}"
+            f"L{x + radius:.3f},{bottom:.3f}"
+            f"C{x + radius - control:.3f},{bottom:.3f} "
+            f"{x:.3f},{bottom - radius + control:.3f} {x:.3f},{bottom - radius:.3f}"
+            f"L{x:.3f},{y + radius:.3f}"
+            f"C{x:.3f},{y + radius - control:.3f} "
+            f"{x + radius - control:.3f},{y:.3f} {x + radius:.3f},{y:.3f}Z"
         )
     return (
-        f"M{x + r:.3f},{y:.3f}"
-        f"C{x + r - k:.3f},{y:.3f} {x:.3f},{y + r - k:.3f} {x:.3f},{y + r:.3f}"
-        f"L{x:.3f},{y1 - r:.3f}"
-        f"C{x:.3f},{y1 - r + k:.3f} {x + r - k:.3f},{y1:.3f} {x + r:.3f},{y1:.3f}"
-        f"L{x1 - r:.3f},{y1:.3f}"
-        f"C{x1 - r + k:.3f},{y1:.3f} {x1:.3f},{y1 - r + k:.3f} {x1:.3f},{y1 - r:.3f}"
-        f"L{x1:.3f},{y + r:.3f}"
-        f"C{x1:.3f},{y + r - k:.3f} {x1 - r + k:.3f},{y:.3f} {x1 - r:.3f},{y:.3f}Z"
+        f"M{x + radius:.3f},{y:.3f}"
+        f"C{x + radius - control:.3f},{y:.3f} "
+        f"{x:.3f},{y + radius - control:.3f} {x:.3f},{y + radius:.3f}"
+        f"L{x:.3f},{bottom - radius:.3f}"
+        f"C{x:.3f},{bottom - radius + control:.3f} "
+        f"{x + radius - control:.3f},{bottom:.3f} {x + radius:.3f},{bottom:.3f}"
+        f"L{right - radius:.3f},{bottom:.3f}"
+        f"C{right - radius + control:.3f},{bottom:.3f} "
+        f"{right:.3f},{bottom - radius + control:.3f} {right:.3f},{bottom - radius:.3f}"
+        f"L{right:.3f},{y + radius:.3f}"
+        f"C{right:.3f},{y + radius - control:.3f} "
+        f"{right - radius + control:.3f},{y:.3f} {right - radius:.3f},{y:.3f}Z"
     )
 
 
 # Measured off the hand-built reference label out/raw/bin.svg (Yamaha XSR900) and held
 # as fractions of the cell so any bin size reproduces that layout. The reference art
 # fills its 4in height edge to edge, so the text sits hard against the top.
-BIN_CAP_HEIGHT_FRAC = 0.0922
-BIN_TEXT_CENTER_FRAC = 0.0522
-BIN_ICON_CENTER_FRAC = 0.6187
-BIN_ICON_HEIGHT_FRAC = 0.7530
+BIN_CAP_HEIGHT_FRACTION = 0.0922
+BIN_TEXT_CENTER_FRACTION = 0.0522
+BIN_ICON_CENTER_FRACTION = 0.6187
+BIN_ICON_HEIGHT_FRACTION = 0.7530
+
+
+def _svg_document(paths, width_in, height_in, viewbox_width_px, viewbox_height_px):
+    body = "\n  ".join(
+        f'<path id="{name}" d="{path_data}"/>' for name, path_data in paths
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
+        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+        f'width="{width_in:.4f}in" height="{height_in:.4f}in" '
+        f'viewBox="0 0 {viewbox_width_px:.3f} {viewbox_height_px:.3f}">\n'
+        '  <g fill="#000000" fill-rule="nonzero" stroke="none">\n  '
+        f"{body}\n  </g>\n</svg>\n"
+    )
 
 
 def build_bin_label(
@@ -232,57 +275,52 @@ def build_bin_label(
     subject's bounding box each pinned to the height fraction measured off the
     reference label, so every bin size prints the same composition.
     """
-    W, H = width_in * PX_PER_IN, height_in * PX_PER_IN
-    avail_w = W - 2 * pad_in * PX_PER_IN
+    width_px, height_px = width_in * PX_PER_IN, height_in * PX_PER_IN
+    available_width_px = width_px - 2 * pad_in * PX_PER_IN
     if cap_height_in is None:
-        cap_height_in = height_in * BIN_CAP_HEIGHT_FRAC
+        cap_height_in = height_in * BIN_CAP_HEIGHT_FRACTION
     if icon_height_in is None:
-        icon_height_in = height_in * BIN_ICON_HEIGHT_FRAC
+        icon_height_in = height_in * BIN_ICON_HEIGHT_FRACTION
 
-    icon_cmds, icon_w, icon_h = None, 0.0, 0.0
+    icon_commands, icon_width_px, icon_height_px = None, 0.0, 0.0
     if icon:
-        icon_h = icon_height_in * PX_PER_IN
-        icon_cmds, icon_w = _icon_commands(icon, icon_h)
-        if icon_w > avail_w:
-            shrink = avail_w / icon_w
-            icon_h *= shrink
-            icon_cmds, icon_w = _icon_commands(icon, icon_h)
+        icon_height_px = icon_height_in * PX_PER_IN
+        icon_commands, icon_width_px = _icon_commands(icon, icon_height_px)
+        if icon_width_px > available_width_px:
+            icon_height_px *= available_width_px / icon_width_px
+            icon_commands, icon_width_px = _icon_commands(icon, icon_height_px)
 
-    raw, cap_units = text_outline(text, font_path, tracking_em)
-    ink = svgpath.bbox(raw) if raw else None
-    scale = (cap_height_in * PX_PER_IN) / cap_units
-    if ink and (ink[2] - ink[0]) * scale > avail_w:
-        scale *= avail_w / ((ink[2] - ink[0]) * scale)
-        print(f"  shrank text to fit: cap height {scale * cap_units / PX_PER_IN:.3f}in")
-    cap_px = cap_units * scale
+    text_commands, cap_height_units = text_outline(text, font_path, tracking_em)
+    ink_box = svgpath.bounding_box(text_commands) if text_commands else None
+    scale = (cap_height_in * PX_PER_IN) / cap_height_units
+    if ink_box and (ink_box[2] - ink_box[0]) * scale > available_width_px:
+        scale *= available_width_px / ((ink_box[2] - ink_box[0]) * scale)
+        print(
+            "  shrank text to fit: cap height "
+            f"{scale * cap_height_units / PX_PER_IN:.3f}in"
+        )
+    cap_height_px = cap_height_units * scale
 
-    icon_top = H * BIN_ICON_CENTER_FRAC - icon_h / 2
-    if icon_cmds and (icon_top < 0 or icon_top + icon_h > H):
+    icon_top_px = height_px * BIN_ICON_CENTER_FRACTION - icon_height_px / 2
+    if icon_commands and (icon_top_px < 0 or icon_top_px + icon_height_px > height_px):
         raise SystemExit(
-            f"a {icon_h / PX_PER_IN:.2f}in subject overruns the {height_in}in cell; "
-            "lower --icon-height"
+            f"a {icon_height_px / PX_PER_IN:.2f}in subject overruns the {height_in}in "
+            "cell; lower --icon-height"
         )
 
     paths = []
-    if raw:
-        baseline = H * BIN_TEXT_CENTER_FRAC + cap_px / 2
+    if text_commands:
+        baseline = height_px * BIN_TEXT_CENTER_FRACTION + cap_height_px / 2
+        left_px = (width_px - (ink_box[0] + ink_box[2]) * scale) / 2
         paths.append(("text", svgpath.serialize(svgpath.transform(
-            raw, scale, 0, 0, -scale, (W - (ink[0] + ink[2]) * scale) / 2, baseline
+            text_commands, scale, 0, 0, -scale, left_px, baseline
         ))))
-    if icon_cmds:
-        paths.append(("icon", svgpath.serialize(svgpath.transform(
-            icon_cmds, 1, 0, 0, 1, (W - icon_w) / 2, icon_top
+    if icon_commands:
+        paths.append(("icon", svgpath.serialize(svgpath.translate(
+            icon_commands, (width_px - icon_width_px) / 2, icon_top_px
         ))))
 
-    body = "\n  ".join(f'<path id="{name}" d="{d}"/>' for name, d in paths)
-    svg = (
-        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
-        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
-        f'width="{width_in:.4f}in" height="{height_in:.4f}in" '
-        f'viewBox="0 0 {W:.3f} {H:.3f}">\n'
-        '  <g fill="#000000" fill-rule="nonzero" stroke="none">\n  '
-        f"{body}\n  </g>\n</svg>\n"
-    )
+    svg = _svg_document(paths, width_in, height_in, width_px, height_px)
     return svg, paths, width_in, height_in
 
 
@@ -302,100 +340,93 @@ def build_label(
     corner_radius_in=0.09,
     font_path=FONT_PATH,
 ):
-    """Return (svg_string, width_in, height_in). Icon prefixes primary, suffixes secondary.
+    """Return (svg, paths, width_in, height_in). Icon prefixes primary, suffixes secondary.
 
     A border_px-wide rounded frame rings the label, held inset_px clear of the content.
     Icon and cap height both default to whatever that leaves, so the two match and fill
     the label without touching the frame.
     """
-    H = label_height_in * PX_PER_IN
-    gap = gap_in * PX_PER_IN
-    pad = pad_in * PX_PER_IN
+    height_px = label_height_in * PX_PER_IN
+    gap_px = gap_in * PX_PER_IN
+    pad_px = pad_in * PX_PER_IN
     border = max(0.0, border_px)
     inset = inset_px if border else 0.0
-    frame = pad + border + inset
+    frame_px = pad_px + border + inset
 
-    content_h = H - 2 * frame
-    if content_h <= 0:
+    content_height_px = height_px - 2 * frame_px
+    if content_height_px <= 0:
         raise SystemExit(
             f"border+inset take up more than the {label_height_in}in label height"
         )
     if cap_height_in is None:
-        cap_height_in = content_h / PX_PER_IN
+        cap_height_in = content_height_px / PX_PER_IN
     if icon_height_in is None:
-        icon_height_in = content_h / PX_PER_IN
+        icon_height_in = content_height_px / PX_PER_IN
 
-    icon_cmds, icon_w = (None, 0.0)
+    icon_commands, icon_width_px = None, 0.0
     if icon:
-        icon_cmds, icon_w = _icon_commands(icon, icon_height_in * PX_PER_IN)
+        icon_commands, icon_width_px = _icon_commands(icon, icon_height_in * PX_PER_IN)
 
-    raw, cap_units = text_outline(text, font_path, tracking_em)
+    text_commands, cap_height_units = text_outline(text, font_path, tracking_em)
 
     def lay_out(cap_in):
-        scale = (cap_in * PX_PER_IN) / cap_units
-        ink = svgpath.bbox(raw) if raw else None
-        w = (ink[2] - ink[0]) * scale if ink else 0.0
-        return scale, ink, w
+        scale = (cap_in * PX_PER_IN) / cap_height_units
+        ink_box = svgpath.bounding_box(text_commands) if text_commands else None
+        width_px = (ink_box[2] - ink_box[0]) * scale if ink_box else 0.0
+        return scale, ink_box, width_px
 
-    scale, ink, text_w = lay_out(cap_height_in)
+    scale, ink_box, text_width_px = lay_out(cap_height_in)
+    icon_and_gap_px = icon_width_px + gap_px if icon_commands else 0.0
 
     if max_width_in is not None:
-        total = frame * 2 + text_w + (icon_w + gap if icon_cmds else 0.0)
-        limit = max_width_in * PX_PER_IN
-        if total > limit and text_w > 0:
-            room = limit - (frame * 2 + (icon_w + gap if icon_cmds else 0.0))
-            if room <= 0:
+        total_px = frame_px * 2 + text_width_px + icon_and_gap_px
+        limit_px = max_width_in * PX_PER_IN
+        if total_px > limit_px and text_width_px > 0:
+            room_px = limit_px - (frame_px * 2 + icon_and_gap_px)
+            if room_px <= 0:
                 raise SystemExit(f"--max-width {max_width_in}in leaves no room for text")
-            cap_height_in *= room / text_w
-            scale, ink, text_w = lay_out(cap_height_in)
+            cap_height_in *= room_px / text_width_px
+            scale, ink_box, text_width_px = lay_out(cap_height_in)
             print(f"  shrank text to fit: cap height {cap_height_in:.3f}in")
 
-    content_w = text_w + (icon_w + gap if icon_cmds else 0.0)
-    total_w = frame * 2 + content_w
+    total_width_px = frame_px * 2 + text_width_px + icon_and_gap_px
 
     if side == "primary":
-        icon_x, text_x = frame, frame + icon_w + gap
+        icon_x, text_x = frame_px, frame_px + icon_width_px + gap_px
     else:
-        text_x, icon_x = frame, frame + text_w + gap
-    if not icon_cmds:
-        text_x = frame
+        text_x, icon_x = frame_px, frame_px + text_width_px + gap_px
+    if not icon_commands:
+        text_x = frame_px
 
     paths = []
     if border:
-        r = corner_radius_in * PX_PER_IN
+        radius_px = corner_radius_in * PX_PER_IN
         paths.append((
             "box",
-            _rounded_rect(pad, pad, total_w - 2 * pad, H - 2 * pad, r)
+            _rounded_rect(
+                pad_px, pad_px, total_width_px - 2 * pad_px, height_px - 2 * pad_px,
+                radius_px,
+            )
             + _rounded_rect(
-                pad + border, pad + border,
-                total_w - 2 * (pad + border), H - 2 * (pad + border),
-                max(0.0, r - border), ccw=True,
+                pad_px + border, pad_px + border,
+                total_width_px - 2 * (pad_px + border),
+                height_px - 2 * (pad_px + border),
+                max(0.0, radius_px - border), counter_clockwise=True,
             ),
         ))
 
-    if icon_cmds:
-        placed = svgpath.transform(
-            icon_cmds, 1, 0, 0, 1, icon_x, (H - icon_height_in * PX_PER_IN) / 2
-        )
-        paths.append(("icon", svgpath.serialize(placed)))
+    if icon_commands:
+        paths.append(("icon", svgpath.serialize(svgpath.translate(
+            icon_commands, icon_x, (height_px - icon_height_in * PX_PER_IN) / 2
+        ))))
 
-    if raw:
-        baseline = (H + cap_height_in * PX_PER_IN) / 2
-        placed = svgpath.transform(
-            raw, scale, 0, 0, -scale, text_x - ink[0] * scale, baseline
-        )
-        paths.append(("text", svgpath.serialize(placed)))
+    if text_commands:
+        baseline = (height_px + cap_height_in * PX_PER_IN) / 2
+        paths.append(("text", svgpath.serialize(svgpath.transform(
+            text_commands, scale, 0, 0, -scale, text_x - ink_box[0] * scale, baseline
+        ))))
 
-    w_in, h_in = total_w / PX_PER_IN, H / PX_PER_IN
-    body = "\n  ".join(
-        f'<path id="{name}" d="{d}"/>' for name, d in paths
-    )
-    svg = (
-        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
-        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
-        f'width="{w_in:.4f}in" height="{h_in:.4f}in" '
-        f'viewBox="0 0 {total_w:.3f} {H:.3f}">\n'
-        '  <g fill="#000000" fill-rule="nonzero" stroke="none">\n  '
-        f"{body}\n  </g>\n</svg>\n"
-    )
-    return svg, paths, w_in, h_in
+    width_in = total_width_px / PX_PER_IN
+    height_in = height_px / PX_PER_IN
+    svg = _svg_document(paths, width_in, height_in, total_width_px, height_px)
+    return svg, paths, width_in, height_in
