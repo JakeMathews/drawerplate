@@ -328,8 +328,12 @@ def run_batch(args):
     _apply_file_defaults(data, args, ("sheet_width", "sheet_height"))
     items = []
     for drawer in drawers:
-        items += render_drawer(drawer.get("name") or slugify(drawer["primary"]["text"]),
-                               drawer["primary"], drawer.get("secondary"), args)
+        entries = render_drawer(drawer.get("name") or slugify(drawer["primary"]["text"]),
+                                drawer["primary"], drawer.get("secondary"), args)
+        if drawer.get("cut", True):
+            items += entries
+        else:
+            print("  (already cut, kept off the sheets)")
     write_sheets(items, args, OUT_DIR / "sheets" / "sheet")
 
 

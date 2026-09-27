@@ -17,115 +17,134 @@
       "name": "saturn-sky-parts",
       "text": "Saturn Sky Parts",
       "icon": "saturn-sky-outline",
-      "icon_desc": "Saturn Sky roadster convertible in side profile, clean outline drawing"
+      "icon_desc": "Saturn Sky roadster convertible in side profile, clean outline drawing",
+      "cut": false
     },
     {
       "name": "saturn-sky-service",
       "text": "Saturn Sky Service",
       "icon": "saturn-sky",
-      "icon_desc": "Saturn Sky roadster convertible, three-quarter front view, MYSKY plate"
+      "icon_desc": "Saturn Sky roadster convertible, three-quarter front view, MYSKY plate",
+      "cut": false
     },
     {
       "name": "smelters",
       "text": "Smelting Furnaces",
       "icon": "smelter-furnace",
-      "icon_desc": "a small cylindrical metal foundry furnace standing upright on short legs, with a perforated body shell and a round lid with a lifting handle on top, and no burner pipe or tube of any kind attached to it"
+      "icon_desc": "a small cylindrical metal foundry furnace standing upright on short legs, with a perforated body shell and a round lid with a lifting handle on top, and no burner pipe or tube of any kind attached to it",
+      "cut": false
     },
     {
       "name": "crucibles",
       "text": "Smelting Crucibles",
       "icon": "crucible",
-      "icon_desc": "a foundry crucible, a tapered cylindrical graphite pot, gripped in a pair of long crucible tongs"
+      "icon_desc": "a foundry crucible, a tapered cylindrical graphite pot, gripped in a pair of long crucible tongs",
+      "cut": false
     },
     {
       "name": "smelting-molds",
       "text": "Smelting Molds",
       "icon": "ingot-mold",
-      "icon_desc": "a cast iron ingot mold, a rectangular tray with several loaf shaped cavities, seen in three quarter view with one metal ingot beside it"
+      "icon_desc": "a cast iron ingot mold, a rectangular tray with several loaf shaped cavities, seen in three quarter view with one metal ingot beside it",
+      "cut": false
     },
     {
       "name": "smelting-ppe",
       "text": "Smelting PPE",
       "icon": "foundry-ppe",
-      "icon_desc": "a foundry face shield with a full visor above a pair of long cuff leather gauntlet gloves crossed at the wrists"
+      "icon_desc": "a foundry face shield with a full visor above a pair of long cuff leather gauntlet gloves crossed at the wrists",
+      "cut": false
     },
     {
       "name": "smelting-tools",
       "text": "Smelting Tools",
       "icon": "foundry-tools",
-      "icon_desc": "a pair of long foundry tongs crossed with a slag skimmer ladle and a stirring rod"
+      "icon_desc": "a pair of long foundry tongs crossed with a slag skimmer ladle and a stirring rod",
+      "cut": false
     },
     {
       "name": "fire-brick",
       "text": "Smelting Fire Brick",
       "icon": "fire-brick",
-      "icon_desc": "a stack of three rectangular refractory fire bricks, seen in three quarter view with visible thickness"
+      "icon_desc": "a stack of three rectangular refractory fire bricks, seen in three quarter view with visible thickness",
+      "cut": false
     },
     {
       "name": "scrap-metal",
       "text": "Smelting Scrap Metal",
       "icon": "scrap-metal",
-      "icon_desc": "a bucket heaped with scrap brass offcuts, thick short bar ends and chunky angular metal pieces piled above the rim"
+      "icon_desc": "a bucket heaped with scrap brass offcuts, thick short bar ends and chunky angular metal pieces piled above the rim",
+      "cut": false
     },
     {
       "name": "toaster-oven",
       "text": "Smelting Toaster Oven",
       "icon": "toaster-oven",
-      "icon_desc": "a countertop toaster oven seen from the front, rectangular body with a glass door, a wire rack inside and a control knob on the right"
+      "icon_desc": "a countertop toaster oven seen from the front, rectangular body with a glass door, a wire rack inside and a control knob on the right",
+      "cut": false
     },
     {
       "name": "john-deere",
       "text": "John Deere Z535M",
       "icon": "z535m",
-      "icon_desc": "John Deere Z535M zero-turn riding mower with bagger, three-quarter side view"
+      "icon_desc": "John Deere Z535M zero-turn riding mower with bagger, three-quarter side view",
+      "cut": false
     },
     {
       "name": "lawn-fluids",
       "text": "Lawn Fluids",
       "icon": "fluid-bottles",
-      "icon_desc": "three small engine fluid bottles of different heights standing in a row, a quart oil bottle, a coolant jug and a narrow fuel treatment bottle"
+      "icon_desc": "three small engine fluid bottles of different heights standing in a row, a quart oil bottle, a coolant jug and a narrow fuel treatment bottle",
+      "cut": false
     },
     {
       "name": "fuel-pumps",
       "text": "Fuel Pumps",
       "icon": "siphon-pump",
-      "icon_desc": "a hand siphon transfer pump, a straight pump barrel with a ribbed flexible hose looping down from it"
+      "icon_desc": "a hand siphon transfer pump, a straight pump barrel with a ribbed flexible hose looping down from it",
+      "cut": false
     },
     {
       "name": "sprinklers",
       "text": "Sprinklers",
       "icon": "sprinkler",
-      "icon_desc": "a lawn impact sprinkler on a sled base, with the swinging arm and nozzle, throwing an arc of water droplets"
+      "icon_desc": "a lawn impact sprinkler on a sled base, with the swinging arm and nozzle, throwing an arc of water droplets",
+      "cut": false
     },
     {
       "name": "car-wash-chemicals",
       "text": "Car Wash Chemicals",
       "icon": "car-chemicals",
-      "icon_desc": "a trigger spray bottle beside a tall blank jug of car wash soap and a squat round tub of wax, all containers completely blank with no labels or writing"
+      "icon_desc": "a trigger spray bottle beside a tall blank jug of car wash soap and a squat round tub of wax, all containers completely blank with no labels or writing",
+      "cut": false
     },
     {
       "name": "car-wash-rags",
       "text": "Car Wash Rags",
       "icon": "wash-rags",
-      "icon_desc": "a folded stack of microfiber towels with a wash mitt resting on top"
+      "icon_desc": "a folded stack of microfiber towels with a wash mitt resting on top",
+      "cut": false
     },
     {
       "name": "spray-paint",
       "text": "Spray Paint",
       "icon": "spray-paint",
-      "icon_desc": "an aerosol spray paint can standing upright with the cap on, seen from the front, spraying a short fan of mist to the right"
+      "icon_desc": "an aerosol spray paint can standing upright with the cap on, seen from the front, spraying a short fan of mist to the right",
+      "cut": false
     },
     {
       "name": "logging",
       "text": "Logging",
       "icon": "logging",
-      "icon_desc": "a logging helmet with an integrated mesh face screen and ear muffs, above a felling axe and a splitting wedge"
+      "icon_desc": "a logging helmet with an integrated mesh face screen and ear muffs, above a felling axe and a splitting wedge",
+      "cut": false
     },
     {
       "name": "outdoors",
       "text": "Outdoors",
       "icon": "outdoors",
-      "icon_desc": "a pair of trekking poles crossed over a pine tree silhouette"
+      "icon_desc": "a pair of trekking poles crossed over a pine tree silhouette",
+      "cut": false
     },
     {
       "name": "catnip",

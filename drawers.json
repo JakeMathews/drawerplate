@@ -6,14 +6,16 @@
       "primary": {
         "text": "SOCKETS",
         "icon": "socket"
-      }
+      },
+      "cut": false
     },
     {
       "name": "02-wrenches",
       "primary": {
         "text": "WRENCHES",
         "icon": "wrench"
-      }
+      },
+      "cut": false
     },
     {
       "name": "03-torque-wrenches",
@@ -21,7 +23,8 @@
         "text": "TORQUE WRENCHES",
         "icon": "torque-wrench",
         "icon_desc": "a torque wrench seen from the side, long straight handle running left to right with a square drive head at the right end and a small dial gauge on the handle"
-      }
+      },
+      "cut": false
     },
     {
       "name": "04-tap-die",
@@ -33,14 +36,16 @@
       "secondary": {
         "text": "EXTRACTORS",
         "icon": "extractor"
-      }
+      },
+      "cut": false
     },
     {
       "name": "05-hand-tools",
       "primary": {
         "text": "HAND TOOLS",
         "icon": "pliers"
-      }
+      },
+      "cut": false
     },
     {
       "name": "06-tape",
@@ -53,7 +58,8 @@
         "text": "ADHESIVES",
         "icon": "sticker",
         "icon_desc": "a square adhesive sticker seen straight on, lying flat, with one bottom corner peeled up and curling back to show the underside, like a peel and stick label"
-      }
+      },
+      "cut": false
     },
     {
       "name": "07-drills",
@@ -61,7 +67,8 @@
         "text": "DRILLS",
         "icon": "drill",
         "icon_desc": "a cordless power drill seen from the side facing left, pistol grip with a battery pack at the bottom of the handle and a chuck with a drill bit at the front"
-      }
+      },
+      "cut": false
     },
     {
       "name": "08-grinding",
@@ -74,7 +81,8 @@
         "text": "CUTTING",
         "icon": "recip-saw",
         "icon_desc": "a reciprocating sawzall seen from the side facing right, a long horizontal barrel body with a grip handle at the left end and a straight toothed saw blade sticking out the right end"
-      }
+      },
+      "cut": false
     },
     {
       "name": "09-band-saw",
@@ -82,7 +90,8 @@
         "text": "BAND SAW",
         "icon": "bandsaw",
         "icon_desc": "a handheld deep-cut portable band saw, angular side view, rectangular body with a large square cutting throat punched through it, blade running down the left of the throat, pistol grip at the lower right and a bar handle on top"
-      }
+      },
+      "cut": false
     },
     {
       "name": "10-circular-saw",
@@ -90,7 +99,8 @@
         "text": "CIRCULAR SAW",
         "icon": "circular-saw",
         "icon_desc": "a circular saw seen from the side facing left, a large round toothed blade with a curved blade guard over the top, a motor body behind it and a handle on top"
-      }
+      },
+      "cut": false
     },
     {
       "name": "11-hammers",
@@ -98,7 +108,8 @@
         "text": "HAMMERS",
         "icon": "hammer",
         "icon_desc": "a claw hammer standing upright with the head at the top, a thick straight handle and a chunky head with a flat striking face on the right and a curved claw on the left"
-      }
+      },
+      "cut": false
     },
     {
       "name": "12-inspection",
@@ -106,7 +117,8 @@
         "text": "INSPECTION",
         "icon": "multimeter",
         "icon_desc": "a handheld digital multimeter standing upright, a rounded rectangular body with a wide display screen at the top, a round selector dial below it, and two test probe leads trailing from the bottom"
-      }
+      },
+      "cut": false
     },
     {
       "name": "13-dremel",
@@ -114,7 +126,8 @@
         "text": "DREMEL",
         "icon": "rotary-tool",
         "icon_desc": "a rotary tool held like a pen, a long cylindrical body lying diagonally with a tapered nose collet at the lower right and a small round cutting wheel mounted in it"
-      }
+      },
+      "cut": false
     },
     {
       "name": "14-safety",
@@ -122,7 +135,8 @@
         "text": "SAFETY",
         "icon": "safety-glasses",
         "icon_desc": "a pair of wraparound safety glasses seen straight on from the front, one wide continuous lens across both eyes with thick temple arms sweeping back on each side"
-      }
+      },
+      "cut": false
     },
     {
       "name": "15-spray-gun",
@@ -130,7 +144,8 @@
         "text": "SPRAY GUN",
         "icon": "spray-gun",
         "icon_desc": "an HVLP paint spray gun seen from the side facing left, a pistol grip body with a trigger, a round nozzle at the front and a cylindrical paint cup mounted underneath"
-      }
+      },
+      "cut": false
     },
     {
       "name": "16-jigsaw",
@@ -143,7 +158,8 @@
         "text": "HELICOIL",
         "icon": "helicoil",
         "icon_desc": "a helicoil wire thread insert standing upright, a short cylindrical coil of thick diamond shaped wire wound in a few even spiral turns like a stretched spring, with a small straight tang sticking out at the bottom"
-      }
+      },
+      "cut": false
     },
     {
       "name": "17-router",
@@ -151,7 +167,8 @@
         "text": "ROUTER",
         "icon": "router-tool",
         "icon_desc": "a compact wood router seen from the side, a tall cylindrical motor body sitting on a wide flat round base with a router bit pointing down through the middle of the base"
-      }
+      },
+      "cut": false
     },
     {
       "name": "18-fasteners",
@@ -159,7 +176,8 @@
         "text": "FASTENERS",
         "icon": "fastener",
         "icon_desc": "a hex head bolt standing upright with the six sided head at the top and a long threaded shank below it, with a matching hex nut threaded onto the middle of the shank"
-      }
+      },
+      "cut": false
     },
     {
       "name": "19-solvents",
@@ -172,7 +190,8 @@
         "text": "GLUE",
         "icon": "glue-bottle",
         "icon_desc": "a bottle of glue standing upright, a rounded squeeze bottle body with a tall pointed conical applicator nozzle cap on top and a single fat drop of glue falling from the tip"
-      }
+      },
+      "cut": false
     },
     {
       "name": "20-dowels-jigs",
@@ -185,7 +204,8 @@
         "text": "POCKET HOLES",
         "icon": "pocket-hole",
         "icon_desc": "a pocket hole jig block, a chunky rectangular block seen from the side with two steep angled guide holes bored diagonally down through it, and a drill bit entering the upper hole at an angle"
-      }
+      },
+      "cut": false
     },
     {
       "name": "21-laser-scanning",

@@ -104,6 +104,8 @@ room, rows stacked until the sheet is full, then a new sheet. Each label's offse
 baked into its path data rather than wrapped in a `<g transform>`, so a sheet imports
 with the same guarantees as a single label. `sheet_width` and `sheet_height` can be set
 in the JSON alongside `drawer_width`; `--no-sheets` skips them.
+Set `"cut": false` on a drawer to keep both of its labels off the sheets once
+they're already on the chest.
 
 ### Shelf bins
 
