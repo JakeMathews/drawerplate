@@ -16,9 +16,10 @@ label after that renders offline in milliseconds.
  primary: left justified, icon prefix    secondary: right justified, icon suffix
 ```
 
-Each drawer label is ringed by a 1 px rounded frame held 5 px clear of the content, so
-the label reads as a plate and can be weeded as a positive or used as a stencil. Icon
-and cap height are equal and sized to whatever the frame leaves.
+Each drawer label is ringed by a rounded frame held 5 px clear of the content. The
+frame is a single cut line, not a shape: it bounds the plate so the negative around
+the letters lifts off as one piece. Icon and cap height are equal and sized to
+whatever the frame leaves.
 
 ## Why the output is safe to cut
 
@@ -26,7 +27,10 @@ and cap height are equal and sized to whatever the frame leaves.
   Studio can't substitute a different face or reflow the metrics.
 - **Physically sized.** The SVG carries `width="4.1383in" height="0.7500in"` with a
   matching 96 dpi `viewBox`. Verified by rendering at 1200 dpi and measuring: the
-  label comes out 0.750 in tall to the pixel, and the frame 0.010 in wide.
+  label comes out 0.750 in tall to the pixel.
+- **Cut lines are single passes.** The frame and the bin divider are unfilled
+  stroked paths, so the cutter follows each once; there is no second contour a
+  hair away to double-cut or to leave an unweedable sliver.
 - **Transforms are baked flat.** Every path is absolute `M`/`L`/`C`/`Z` in the
   label's own coordinate space — no nested `<g transform>` for the importer to
   mishandle.
@@ -127,6 +131,12 @@ partial last sheet is trimmed to the rows it actually uses. `sheet_width`,
 `sheet_height`, `sheet_margin` and `gutter` can be set in the JSON alongside
 `bin_width`.
 
+Every bin label carries a single cut line around the cell edge and a divider
+across it midway between the text and the picture, so the negative weeds off in
+two small pieces instead of one big one. `--border 0` drops both, `--no-divider`
+just the divider. The composition is laid out in the box `--pad` inside the
+frame, so nothing touches a cut line.
+
 Note that the cell has to divide the *usable* area, not the sheet: a 6 x 4 cell
 tiles a bare 12in width exactly, so asking for any margin or gutter at that size
 costs a whole column and halves the sheet. `bins.json` uses **5.625 x 3.75**
@@ -220,7 +230,7 @@ Cached art lives in `icons/`:
 | `--cap-height` | fills the frame | height of a capital letter |
 | `--icon-height` | matches cap height | icon height |
 | `--label-height` | `0.75in` | canvas height, i.e. usable drawer height |
-| `--border` | `1px` | width of the rounded frame; `0` omits it |
+| `--border` | `1px` | drawn weight of the frame cut line; `0` omits it |
 | `--inset` | `5px` | clearance between the frame and the content |
 | `--corner-radius` | `0.09in` | corner rounding on the frame |
 | `--gap` | `0.12in` | space between icon and text |
@@ -250,14 +260,15 @@ can carry real identifying detail, so the prompt asks for a solid black mass wit
 white knockouts instead of the radically simplified pictogram a 0.75 in drawer
 label needs.
 
-`--cap-height` and `--icon-height` default to fractions of the cell height rather
-than to fixed inches, so a bin printed at any size keeps the same composition.
-The fractions come from the hand-built reference label in `out/raw/bin.svg`: cap
-height `0.0922`, subject height `0.7530`, with the text cap box centered at
-`0.0522` of the height and the subject's bounding box at `0.6187`. Both are
-centered on the cell's vertical axis. At the default 6 x 4 in that is a 0.369 in
-cap and a 3.01 in subject. A subject wider than the cell minus `--pad` is scaled
-down to fit, keeping its center on the same point.
+`--cap-height` and `--icon-height` default to fractions of the box inside the pad
+rather than to fixed inches, so a bin printed at any size keeps the same
+composition. The fractions come from the hand-built reference label in
+`out/raw/bin.svg`: cap height `0.0922`, subject height `0.7530`, with the text cap
+box centered at `0.0522` of the box height and the subject's bounding box at
+`0.6187`. Both are centered on the cell's vertical axis. At the default 6 x 4 in
+with a 0.25 in pad the box is 3.5 in tall, giving a 0.323 in cap and a 2.64 in
+subject. A subject wider than the box is scaled down to fit, keeping its center on
+the same point.
 
 Cap height is taken from the font's metrics, not from each string's bounding box,
 so every label in a set shares one baseline and one letter size. Round letters
@@ -278,18 +289,18 @@ drawer secondary:  ╭─ border ───────────────�
                    │ inset [ text ][ gap ][ icon ] inset │
                    ╰─────────────────────────────────────╯
 
-bin:  ┌──────── 6in ────────┐
-      │        text         │  cap box centered at 0.0522 H
-      │                     │  4in
-      │        icon         │  bbox centered at 0.6187 H
-      └─────────────────────┘
+bin:  ╭──────── 6in ────────╮
+      │ pad    text         │  cap box centered at 0.0522 of the box inside the pad
+      ├─────────────────────┤  divider, midway between text and icon
+      │        icon         │  4in
+      │        icon         │  bbox centered at 0.6187 of the box
+      ╰─────────────────────╯
 ```
 
 For drawer labels, width is whatever the content needs and height is always the
-label height. The frame is emitted as a filled ring — an outer rounded rectangle
-plus a reversed inner one — not a stroke, so it stays an outline like everything
-else and Easy Cut Studio cuts both contours. Bin labels are the opposite shape and
-carry no frame: a fixed cell with the content centered inside it.
+label height. Bin labels are the opposite shape: a fixed cell with the content
+centered inside it. Both frames, and the bin divider, are unfilled stroked paths
+that Easy Cut Studio cuts as single lines; text and icons stay filled outlines.
 
 ## Repo layout
 

@@ -11,8 +11,33 @@ FONT_PATH = Path.home() / "Library/Fonts/JetBrainsMono-Bold.ttf"
 PX_PER_IN = 96.0
 
 
-def _joined_path_data(paths):
-    return "".join(path_data for _, path_data in paths)
+CUT_STROKE_PX = 1.0
+
+
+def is_cut_line(name):
+    """Cut-only paths (frame, divider) are stroked hairlines, not filled shapes."""
+    return name.startswith("cut")
+
+
+def _paths_markup(paths, ink_color, x_px=0.0, y_px=0.0):
+    """<path> elements for one label with its offset baked into the path data.
+
+    Filled shapes (text, icons) merge into one path; each cut line stays its own
+    unfilled stroked path so the cutter follows it once.
+    """
+    def placed(path_data):
+        commands = svgpath.parse(path_data)
+        if x_px or y_px:
+            commands = svgpath.translate(commands, x_px, y_px)
+        return svgpath.serialize(commands)
+
+    fill_data = "".join(placed(data) for name, data in paths if not is_cut_line(name))
+    markup = f'<path d="{fill_data}"/>' if fill_data else ""
+    for name, data in paths:
+        if is_cut_line(name):
+            markup += (f'<path d="{placed(data)}" fill="none" stroke="{ink_color}" '
+                       f'stroke-width="{CUT_STROKE_PX:g}"/>')
+    return markup
 
 
 def drawer_preview(entries, drawer_width_in, label_height_in=0.75, margin_in=0.15):
@@ -28,10 +53,7 @@ def drawer_preview(entries, drawer_width_in, label_height_in=0.75, margin_in=0.1
         x = margin_px if side == "primary" else (
             width_px - margin_px - label_width_in * PX_PER_IN
         )
-        groups.append(
-            f'<g transform="translate({x:.3f},{margin_px:.3f})">'
-            f'<path d="{_joined_path_data(paths)}"/></g>'
-        )
+        groups.append(_paths_markup(paths, "#ffffff", x, margin_px))
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width_px:.1f}" '
         f'height="{height_px:.1f}" '
@@ -64,14 +86,12 @@ def tile_sheet(cells, cell_width_in, cell_height_in, columns, invert=False,
     column_step_px = (cell_width_in + gutter_in) * PX_PER_IN
     row_step_px = (cell_height_in + gutter_in) * PX_PER_IN
     margin_px = margin_in * PX_PER_IN
+    ink_color = "#ffffff" if invert else "#000000"
     groups = []
     for index, paths in enumerate(cells):
         x = margin_px + (index % columns) * column_step_px
         y = margin_px + (index // columns) * row_step_px
-        groups.append(
-            f'<g transform="translate({x:.3f},{y:.3f})">'
-            f'<path d="{_joined_path_data(paths)}"/></g>'
-        )
+        groups.append(_paths_markup(paths, ink_color, x, y))
     return _sheet_svg(
         "".join(groups),
         columns * cell_width_in + (columns - 1) * gutter_in + 2 * margin_in,
@@ -133,11 +153,9 @@ def nest(items, sheet_width_in, sheet_height_in, label_height_in, gutter_in, mar
 
 def nest_sheet(placed, sheet_width_in, sheet_height_in, invert=False):
     """Render one packed sheet, baking each label's offset into its path data."""
-    rendered = []
-    for _, paths, x_in, y_in in placed:
-        commands = svgpath.parse(_joined_path_data(paths))
-        commands = svgpath.translate(commands, x_in * PX_PER_IN, y_in * PX_PER_IN)
-        rendered.append(f'<path d="{svgpath.serialize(commands)}"/>')
+    ink_color = "#ffffff" if invert else "#000000"
+    rendered = [_paths_markup(paths, ink_color, x_in * PX_PER_IN, y_in * PX_PER_IN)
+                for _, paths, x_in, y_in in placed]
     return _sheet_svg("".join(rendered), sheet_width_in, sheet_height_in, invert)
 
 
@@ -236,8 +254,9 @@ def _rounded_rect(x, y, width, height, radius, counter_clockwise=False):
 
 
 # Measured off the hand-built reference label out/raw/bin.svg (Yamaha XSR900) and held
-# as fractions of the cell so any bin size reproduces that layout. The reference art
-# fills its 4in height edge to edge, so the text sits hard against the top.
+# as fractions of the box inside the pad so any bin size reproduces that layout. The
+# reference art fills its 4in height edge to edge, so the text sits hard against the
+# top of the box.
 BIN_CAP_HEIGHT_FRACTION = 0.0922
 BIN_TEXT_CENTER_FRACTION = 0.0522
 BIN_ICON_CENTER_FRACTION = 0.6187
@@ -246,7 +265,10 @@ BIN_ICON_HEIGHT_FRACTION = 0.7530
 
 def _svg_document(paths, width_in, height_in, viewbox_width_px, viewbox_height_px):
     body = "\n  ".join(
-        f'<path id="{name}" d="{path_data}"/>' for name, path_data in paths
+        f'<path id="{name}" d="{path_data}" fill="none" stroke="#000000" '
+        f'stroke-width="{CUT_STROKE_PX:g}"/>'
+        if is_cut_line(name) else f'<path id="{name}" d="{path_data}"/>'
+        for name, path_data in paths
     )
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
@@ -267,6 +289,9 @@ def build_bin_label(
     icon_height_in=None,
     pad_in=0.25,
     tracking_em=0.0,
+    border_px=1.0,
+    corner_radius_in=0.25,
+    divider=True,
     font_path=FONT_PATH,
 ):
     """Return (svg, paths, width_in, height_in) for a bin label: text over a subject.
@@ -274,13 +299,21 @@ def build_bin_label(
     Both are centered on the cell's vertical axis, with the text cap box and the
     subject's bounding box each pinned to the height fraction measured off the
     reference label, so every bin size prints the same composition.
+
+    A single cut line frames the cell at its edge and a divider runs across it midway
+    between the text and the subject, so the negative weeds out in two smaller pieces.
+    The composition is laid out in the box pad_in inside the frame, so nothing touches
+    it. border_px=0 drops both cut lines.
     """
     width_px, height_px = width_in * PX_PER_IN, height_in * PX_PER_IN
-    available_width_px = width_px - 2 * pad_in * PX_PER_IN
+    pad_px = pad_in * PX_PER_IN
+    box_height_in = height_in - 2 * pad_in
+    box_height_px = box_height_in * PX_PER_IN
+    available_width_px = width_px - 2 * pad_px
     if cap_height_in is None:
-        cap_height_in = height_in * BIN_CAP_HEIGHT_FRACTION
+        cap_height_in = box_height_in * BIN_CAP_HEIGHT_FRACTION
     if icon_height_in is None:
-        icon_height_in = height_in * BIN_ICON_HEIGHT_FRACTION
+        icon_height_in = box_height_in * BIN_ICON_HEIGHT_FRACTION
 
     icon_commands, icon_width_px, icon_height_px = None, 0.0, 0.0
     if icon:
@@ -301,24 +334,38 @@ def build_bin_label(
         )
     cap_height_px = cap_height_units * scale
 
-    icon_top_px = height_px * BIN_ICON_CENTER_FRACTION - icon_height_px / 2
-    if icon_commands and (icon_top_px < 0 or icon_top_px + icon_height_px > height_px):
+    icon_top_px = pad_px + box_height_px * BIN_ICON_CENTER_FRACTION - icon_height_px / 2
+    if icon_commands and (icon_top_px < pad_px
+                          or icon_top_px + icon_height_px > height_px - pad_px):
         raise SystemExit(
-            f"a {icon_height_px / PX_PER_IN:.2f}in subject overruns the {height_in}in "
-            "cell; lower --icon-height"
+            f"a {icon_height_px / PX_PER_IN:.2f}in subject overruns the {box_height_in}in "
+            "box inside the pad; lower --icon-height"
         )
 
     paths = []
+    frame_px = CUT_STROKE_PX / 2
+    if border_px > 0:
+        paths.append(("cut-frame", _rounded_rect(
+            frame_px, frame_px, width_px - 2 * frame_px, height_px - 2 * frame_px,
+            corner_radius_in * PX_PER_IN,
+        )))
+    text_bottom_px = None
     if text_commands:
-        baseline = height_px * BIN_TEXT_CENTER_FRACTION + cap_height_px / 2
+        baseline = pad_px + box_height_px * BIN_TEXT_CENTER_FRACTION + cap_height_px / 2
         left_px = (width_px - (ink_box[0] + ink_box[2]) * scale) / 2
         paths.append(("text", svgpath.serialize(svgpath.transform(
             text_commands, scale, 0, 0, -scale, left_px, baseline
         ))))
+        text_bottom_px = baseline - ink_box[1] * scale
     if icon_commands:
         paths.append(("icon", svgpath.serialize(svgpath.translate(
             icon_commands, (width_px - icon_width_px) / 2, icon_top_px
         ))))
+    if border_px > 0 and divider and text_bottom_px is not None and icon_commands:
+        divider_px = (text_bottom_px + icon_top_px) / 2
+        paths.append(("cut-divider",
+                      f"M{frame_px:.3f},{divider_px:.3f}"
+                      f"L{width_px - frame_px:.3f},{divider_px:.3f}"))
 
     svg = _svg_document(paths, width_in, height_in, width_px, height_px)
     return svg, paths, width_in, height_in
@@ -342,9 +389,10 @@ def build_label(
 ):
     """Return (svg, paths, width_in, height_in). Icon prefixes primary, suffixes secondary.
 
-    A border_px-wide rounded frame rings the label, held inset_px clear of the content.
-    Icon and cap height both default to whatever that leaves, so the two match and fill
-    the label without touching the frame.
+    A rounded frame rings the label as a single cut line, held inset_px clear of the
+    content (border_px is its drawn weight; 0 drops it). Icon and cap height both
+    default to whatever that leaves, so the two match and fill the label without
+    touching the frame.
     """
     height_px = label_height_in * PX_PER_IN
     gap_px = gap_in * PX_PER_IN
@@ -401,19 +449,11 @@ def build_label(
     paths = []
     if border:
         radius_px = corner_radius_in * PX_PER_IN
-        paths.append((
-            "box",
-            _rounded_rect(
-                pad_px, pad_px, total_width_px - 2 * pad_px, height_px - 2 * pad_px,
-                radius_px,
-            )
-            + _rounded_rect(
-                pad_px + border, pad_px + border,
-                total_width_px - 2 * (pad_px + border),
-                height_px - 2 * (pad_px + border),
-                max(0.0, radius_px - border), counter_clockwise=True,
-            ),
-        ))
+        paths.append(("cut-frame", _rounded_rect(
+            pad_px + border / 2, pad_px + border / 2,
+            total_width_px - 2 * pad_px - border, height_px - 2 * pad_px - border,
+            radius_px,
+        )))
 
     if icon_commands:
         paths.append(("icon", svgpath.serialize(svgpath.translate(

@@ -82,6 +82,12 @@ def add_bin_arguments(parser):
     group.add_argument("--tracking", type=float, default=0.0, metavar="EM")
     group.add_argument("--font", default=str(labels.FONT_PATH))
     group.add_argument("--upper", action="store_true", help="uppercase the text")
+    group.add_argument("--border", type=float, default=1.0, metavar="PX",
+                       help="drawn weight of the frame cut line; 0 omits frame and divider")
+    group.add_argument("--corner-radius", type=float, default=0.25, metavar="IN",
+                       help="corner rounding on the frame (default 0.25)")
+    group.add_argument("--no-divider", action="store_true",
+                       help="skip the cut line between the text and the subject")
     group.add_argument("--sheet-width", type=float, default=12.0, metavar="IN",
                        help="stock vinyl width to tile labels across (default 12)")
     group.add_argument("--sheet-height", type=float, default=14.0, metavar="IN",
@@ -135,6 +141,9 @@ def bin_style_options(args):
         icon_height_in=args.icon_height,
         pad_in=args.pad,
         tracking_em=args.tracking,
+        border_px=args.border,
+        corner_radius_in=args.corner_radius,
+        divider=not args.no_divider,
         font_path=args.font,
     )
 
