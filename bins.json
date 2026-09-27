@@ -150,19 +150,22 @@
       "name": "catnip",
       "text": "Catnip",
       "icon": "catnip",
-      "icon_desc": "a bundle of dried catnip stalks tied together with twine and hanging upside down to dry, leafy stems with small flower heads at the bottom, beside a sitting cat looking up at it"
+      "icon_desc": "a bundle of dried catnip stalks tied together with twine and hanging upside down to dry, leafy stems with small flower heads at the bottom, beside a sitting cat looking up at it",
+      "cut": false
     },
     {
       "name": "fireworks",
       "text": "Fireworks",
       "icon": "fireworks",
-      "icon_desc": "a bundle of skyrocket fireworks on sticks standing in a group with a lit fuse, next to a fat round aerial shell mortar tube, with a single burst of sparks above"
+      "icon_desc": "a bundle of skyrocket fireworks on sticks standing in a group with a lit fuse, next to a fat round aerial shell mortar tube, with a single burst of sparks above",
+      "cut": false
     },
     {
       "name": "pickleball",
       "text": "Pickleball",
       "icon": "pickleball",
-      "icon_desc": "two pickleball paddles crossed over each other with a perforated pickleball with round holes resting in front of them"
+      "icon_desc": "two pickleball paddles crossed over each other with a perforated pickleball with round holes resting in front of them",
+      "cut": false
     }
   ]
 }
