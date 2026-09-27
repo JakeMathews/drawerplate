@@ -76,28 +76,25 @@ def _sheet_svg(body, width_in, height_in, invert):
     )
 
 
-def tile_sheet(cells, cell_width_in, cell_height_in, columns, invert=False,
-               margin_in=0.0, gutter_in=0.0):
-    """Tile fixed-size label cells into one exact-size sheet SVG.
+def tile_sheet(cells, cell_width_in, cell_height_in, columns, sheet_width_in,
+               sheet_height_in, invert=False, margin_in=0.0, gutter_in=0.0):
+    """Tile fixed-size label cells onto one full-size sheet SVG.
 
-    cells is a list of path lists as returned by build_bin_label.
+    cells is a list of path lists as returned by build_bin_label. Cells pack into the
+    bottom-right corner, bottom row first and right to left, so the unused stock is
+    one clean rectangle at the top left.
     """
-    rows = (len(cells) + columns - 1) // columns
     column_step_px = (cell_width_in + gutter_in) * PX_PER_IN
     row_step_px = (cell_height_in + gutter_in) * PX_PER_IN
-    margin_px = margin_in * PX_PER_IN
+    right_px = (sheet_width_in - margin_in - cell_width_in) * PX_PER_IN
+    bottom_px = (sheet_height_in - margin_in - cell_height_in) * PX_PER_IN
     ink_color = "#ffffff" if invert else "#000000"
     groups = []
     for index, paths in enumerate(cells):
-        x = margin_px + (index % columns) * column_step_px
-        y = margin_px + (index // columns) * row_step_px
+        x = right_px - (index % columns) * column_step_px
+        y = bottom_px - (index // columns) * row_step_px
         groups.append(_paths_markup(paths, ink_color, x, y))
-    return _sheet_svg(
-        "".join(groups),
-        columns * cell_width_in + (columns - 1) * gutter_in + 2 * margin_in,
-        rows * cell_height_in + (rows - 1) * gutter_in + 2 * margin_in,
-        invert,
-    )
+    return _sheet_svg("".join(groups), sheet_width_in, sheet_height_in, invert)
 
 
 def nest(items, sheet_width_in, sheet_height_in, label_height_in, gutter_in, margin_in):
@@ -105,7 +102,9 @@ def nest(items, sheet_width_in, sheet_height_in, label_height_in, gutter_in, mar
 
     items is a list of (key, paths, width_in). All labels share one height, so rows are
     uniform and only the horizontal fill varies — widest-first into the first row with
-    room. Returns a list of sheets, each a list of (key, paths, x_in, y_in).
+    room. Rows stack up from the bottom edge and each row is flush right, so the unused
+    stock is one clean block at the top left. Returns a list of sheets, each a list of
+    (key, paths, x_in, y_in).
     """
     usable_width_in = sheet_width_in - 2 * margin_in
     usable_height_in = sheet_height_in - 2 * margin_in
@@ -142,8 +141,9 @@ def nest(items, sheet_width_in, sheet_height_in, label_height_in, gutter_in, mar
         placed = []
         sheet_rows = row_contents[first_row : first_row + rows_per_sheet]
         for row_index, row_items in enumerate(sheet_rows):
-            x_in = margin_in
-            y_in = margin_in + row_index * (label_height_in + gutter_in)
+            x_in = sheet_width_in - margin_in - row_widths_in[first_row + row_index]
+            y_in = (sheet_height_in - margin_in - label_height_in
+                    - row_index * (label_height_in + gutter_in))
             for key, paths, width_in in row_items:
                 placed.append((key, paths, x_in, y_in))
                 x_in += width_in + gutter_in

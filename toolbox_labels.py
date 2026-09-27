@@ -292,12 +292,14 @@ def write_bin_sheets(cells, args, stem):
         sheet_path = stem.parent / f"{stem.name}-{number:02d}.svg"
         sheet_path.write_text(
             labels.tile_sheet(chunk, args.bin_width, args.bin_height, columns,
+                              args.sheet_width, args.sheet_height,
                               margin_in=margin_in, gutter_in=gutter_in)
         )
         print(f"  sheet {number:02d}  {len(chunk):2d} labels"
               f"  -> {relative_to_root(sheet_path)}")
         rasterize(
             labels.tile_sheet(chunk, args.bin_width, args.bin_height, columns,
+                              args.sheet_width, args.sheet_height,
                               invert=True, margin_in=margin_in, gutter_in=gutter_in),
             sheet_path.with_suffix(".png"),
         )

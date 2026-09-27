@@ -104,7 +104,9 @@ resolves straight from the cache. Descriptions are remembered in
 `batch` also nests every label onto **12 x 12 in** sheets — `out/sheets/sheet-NN.svg`
 to cut, plus a white-on-black `sheet-NN.png` to eyeball first. Drawer labels all share
 one height, so the packing is a shelf fit: widest label first into the first row with
-room, rows stacked until the sheet is full, then a new sheet. Each label's offset is
+room, rows stacked until the sheet is full, then a new sheet. Rows fill from the
+bottom edge up and each row sits flush right, so what's left of the sheet is one
+clean block at the top left rather than a ragged edge. Each label's offset is
 baked into its path data rather than wrapped in a `<g transform>`, so a sheet imports
 with the same guarantees as a single label. `sheet_width` and `sheet_height` can be set
 in the JSON alongside `drawer_width`; `--no-sheets` skips them.
@@ -126,10 +128,10 @@ The cell defaults to **6 x 4 in**, and labels are tiled onto **12 x 14 in**
 sheets with a 0.25in margin around the sheet and a 0.25in gutter between labels,
 so every part has clear space to weed and cut into. Writes `out/bins/<name>.svg`
 for each individual label, and the tiled sheets to their own `out/bin-sheets/` —
-`sheet-NN.svg` (what you cut) and `sheet-NN.png` (white-on-black preview). A
-partial last sheet is trimmed to the rows it actually uses. `sheet_width`,
-`sheet_height`, `sheet_margin` and `gutter` can be set in the JSON alongside
-`bin_width`.
+`sheet-NN.svg` (what you cut) and `sheet-NN.png` (white-on-black preview). Sheets
+are always the full stock size, with the cells packed into the bottom-right corner
+so the offcut is one clean rectangle. `sheet_width`, `sheet_height`,
+`sheet_margin` and `gutter` can be set in the JSON alongside `bin_width`.
 
 Every bin label carries a single cut line around the cell edge and a divider
 across it midway between the text and the picture, so the negative weeds off in
