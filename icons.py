@@ -28,8 +28,14 @@ _SHARED_RULES = """
 - No gray, no gradients, no shading, no texture, no drop shadow, no 3D, no perspective.
 - No border, no frame, no circle or badge behind the subject. Plain white background.
 - One single centered subject, viewed straight on, simple friendly cartoon style.
-- Very bold and chunky. Every black shape and every white gap must be thick. No thin
-  lines, no hairlines, no fine detail, no cross-hatching, no small dots, no small holes.
+- SQUARE COMPOSITION: the subject must be about as wide as it is tall and fill the
+  square frame evenly. Turn a long thin object diagonally, corner to corner, or show it
+  foreshortened or in a compact pose so it fills a square rather than a thin strip.
+- ONE CONNECTED PIECE: all of the black must touch and form a single connected shape.
+  No separate floating black pieces, no detached parts, no dots, no islands.
+- Very bold and chunky. Every black shape and every white gap must be thick, at least
+  one tenth of the subject's height. No thin lines, no hairlines, no fine detail, no
+  cross-hatching, no small dots, no small holes.
 - Radically simplified so it reads instantly as a pictogram printed 3/4 inch tall.
 - No text, no letters, no numbers, no watermark.
 - Leave a small even white margin around the subject."""
@@ -177,7 +183,7 @@ def _flatten_potrace(svg_text):
         commands += svgpath.transform(
             svgpath.parse(path_data), scale_x, 0, 0, scale_y, translate_x, translate_y
         )
-    return commands
+    return commands, len(path_datas)
 
 
 def _normalize(commands):
@@ -194,10 +200,12 @@ def _normalize(commands):
 
 def vectorize(png_bytes, threshold=128, turdsize=150, alphamax=1.0, opttolerance=0.2,
               invert=False):
+    """Return (path data, aspect, pieces): pieces counts separate black shapes."""
     bitmap = _binarize(png_bytes, threshold, invert)
     traced = _potrace(bitmap, turdsize, alphamax, opttolerance)
-    commands, aspect = _normalize(_flatten_potrace(traced))
-    return svgpath.serialize(commands), aspect
+    commands, pieces = _flatten_potrace(traced)
+    commands, aspect = _normalize(commands)
+    return svgpath.serialize(commands), aspect, pieces
 
 
 def _digest(path):
@@ -243,13 +251,15 @@ def load(slug):
 
 
 def save(slug, description, png_bytes, path_data, aspect, trace_options, style,
-         source=None, source_sha256=None):
+         source=None, source_sha256=None, pieces=None):
     ICON_DIR.mkdir(exist_ok=True)
     meta_path, png_path, svg_path = icon_files(slug)
     if png_bytes is not None:
         png_path.write_bytes(png_bytes)
     record = {"slug": slug, "description": description, "style": style, "aspect": aspect,
               "trace": trace_options, "path": path_data}
+    if pieces is not None:
+        record["pieces"] = pieces
     if source:
         record["source"] = source
         record["source_sha256"] = source_sha256
@@ -273,11 +283,11 @@ def import_file(slug, source, description=None, **trace_options):
     Image.open(source).save(buffer, "PNG")
     png_bytes = buffer.getvalue()
 
-    path_data, aspect = vectorize(png_bytes, **trace_options)
+    path_data, aspect, pieces = vectorize(png_bytes, **trace_options)
     catalog = read_catalog()
     description = description or catalog.get(slug) or f"traced from {source.name}"
     save(slug, description, png_bytes, path_data, aspect, trace_options, "imported",
-         source=portable_source(source), source_sha256=_digest(source))
+         source=portable_source(source), source_sha256=_digest(source), pieces=pieces)
     catalog[slug] = description
     write_catalog(catalog)
     return load(slug)
@@ -298,14 +308,27 @@ def refresh(slug, meta=None):
 
 
 def ensure(slug, description=None, regen=False, quality="high", size="1024x1024",
-           style="solid", **trace_options):
-    """Return icon metadata, generating and tracing it on a cache miss."""
+           style="solid", max_pieces=3, attempts=2, **trace_options):
+    """Return icon metadata, generating and tracing it on a cache miss.
+
+    A generated icon that traces to more than max_pieces separate black shapes is
+    rerolled, up to attempts generations, and the attempt with the fewest pieces is
+    kept: detached pieces are what slide around on transfer tape. Imported icons are
+    never regenerated; a regen retraces them from their source file instead.
+    """
     catalog = read_catalog()
     description = description or catalog.get(slug)
     existing = load(slug)
 
     if existing and not regen:
         return refresh(slug, existing) or existing
+    if existing and existing.get("style") == "imported" and existing.get("source"):
+        source = resolve_source(existing["source"])
+        if source.exists():
+            print(f"  '{slug}' is imported art, retracing {source.name} instead")
+            return import_file(slug, source, existing.get("description"), **trace_options)
+        print(f"  '{slug}' is imported art but {source} is missing; keeping the cache")
+        return existing
     if not description:
         raise SystemExit(f"Icon '{slug}' is not cached and has no description. "
                          f"Pass --icon-desc or add it to icons/catalog.json.")
@@ -313,12 +336,27 @@ def ensure(slug, description=None, regen=False, quality="high", size="1024x1024"
     _, png_path, _ = icon_files(slug)
     if regen == "retrace" and png_path.exists():
         png_bytes = png_path.read_bytes()
+        best = (png_bytes,) + vectorize(png_bytes, **trace_options)
     else:
-        print(f"  generating icon '{slug}' ...")
-        png_bytes = _request_image(description, load_api_key(), quality, size, style)
+        api_key = load_api_key()
+        best = None
+        for attempt in range(1, max(1, attempts) + 1):
+            print(f"  generating icon '{slug}' ..." if attempt == 1 else
+                  f"  {best[3]} pieces > {max_pieces}, rerolling '{slug}' "
+                  f"({attempt}/{attempts}) ...")
+            png_bytes = _request_image(description, api_key, quality, size, style)
+            candidate = (png_bytes,) + vectorize(png_bytes, **trace_options)
+            if best is None or candidate[3] < best[3]:
+                best = candidate
+            if best[3] <= max_pieces:
+                break
+    png_bytes, path_data, aspect, pieces = best
+    if pieces > max_pieces:
+        print(f"  WARNING: '{slug}' traced to {pieces} separate pieces; "
+              "loose bits may not survive transfer tape")
 
-    path_data, aspect = vectorize(png_bytes, **trace_options)
-    save(slug, description, png_bytes, path_data, aspect, trace_options, style)
+    save(slug, description, png_bytes, path_data, aspect, trace_options, style,
+         pieces=pieces)
     catalog[slug] = description
     write_catalog(catalog)
     return load(slug)

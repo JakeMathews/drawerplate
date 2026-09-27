@@ -385,6 +385,9 @@ def build_label(
     border_px=1.0,
     inset_px=5.0,
     corner_radius_in=0.09,
+    icon_slot_in=0.75,
+    icon_align="center",
+    guide_in=0.1,
     font_path=FONT_PATH,
 ):
     """Return (svg, paths, width_in, height_in). Icon prefixes primary, suffixes secondary.
@@ -393,6 +396,16 @@ def build_label(
     content (border_px is its drawn weight; 0 drops it). Icon and cap height both
     default to whatever that leaves, so the two match and fill the label without
     touching the frame.
+
+    The icon sits in a slot icon_slot_in wide no matter how wide the icon is, so the
+    text starts at the same x on every label (0 shrinks the slot to the icon). Icons
+    wider than the slot scale down to fit it; icon_align puts the icon at the left,
+    center or right of the slot.
+
+    guide_in adds a filled bar of that width on the outer edge of the label, the full
+    content height, with a gap before the icon slot. It is a positive piece: it weeds
+    and transfers with the label so its outer edge can be squared to a pencil line or
+    the drawer edge, then it peels off once the label is down. 0 omits it.
     """
     height_px = label_height_in * PX_PER_IN
     gap_px = gap_in * PX_PER_IN
@@ -411,9 +424,24 @@ def build_label(
     if icon_height_in is None:
         icon_height_in = content_height_px / PX_PER_IN
 
-    icon_commands, icon_width_px = None, 0.0
+    if icon_align not in ("left", "center", "right"):
+        raise SystemExit(f"icon_align must be left, center or right, not {icon_align!r}")
+    slot_px = max(0.0, icon_slot_in) * PX_PER_IN
+    guide_px = max(0.0, guide_in) * PX_PER_IN
+    guide_and_gap_px = guide_px + gap_px if guide_px else 0.0
+
+    icon_commands, icon_width_px, icon_height_px = None, 0.0, 0.0
     if icon:
-        icon_commands, icon_width_px = _icon_commands(icon, icon_height_in * PX_PER_IN)
+        icon_height_px = icon_height_in * PX_PER_IN
+        icon_commands, icon_width_px = _icon_commands(icon, icon_height_px)
+        if slot_px and icon_width_px > slot_px:
+            icon_height_px *= slot_px / icon_width_px
+            icon_commands, icon_width_px = _icon_commands(icon, icon_height_px)
+            print(f"  shrank icon to fit the {icon_slot_in:g}in slot: "
+                  f"{icon_height_px / PX_PER_IN:.3f}in tall")
+        slot_px = max(slot_px, icon_width_px)
+    else:
+        slot_px = 0.0
 
     text_commands, cap_height_units = text_outline(text, font_path, tracking_em)
 
@@ -424,27 +452,33 @@ def build_label(
         return scale, ink_box, width_px
 
     scale, ink_box, text_width_px = lay_out(cap_height_in)
-    icon_and_gap_px = icon_width_px + gap_px if icon_commands else 0.0
+    icon_and_gap_px = slot_px + gap_px if icon_commands else 0.0
+    fixed_px = frame_px * 2 + guide_and_gap_px + icon_and_gap_px
 
     if max_width_in is not None:
-        total_px = frame_px * 2 + text_width_px + icon_and_gap_px
+        total_px = fixed_px + text_width_px
         limit_px = max_width_in * PX_PER_IN
         if total_px > limit_px and text_width_px > 0:
-            room_px = limit_px - (frame_px * 2 + icon_and_gap_px)
+            room_px = limit_px - fixed_px
             if room_px <= 0:
                 raise SystemExit(f"--max-width {max_width_in}in leaves no room for text")
             cap_height_in *= room_px / text_width_px
             scale, ink_box, text_width_px = lay_out(cap_height_in)
             print(f"  shrank text to fit: cap height {cap_height_in:.3f}in")
 
-    total_width_px = frame_px * 2 + text_width_px + icon_and_gap_px
+    total_width_px = fixed_px + text_width_px
 
+    # Reading order from the outer edge inward: guide bar, icon slot, text.
     if side == "primary":
-        icon_x, text_x = frame_px, frame_px + icon_width_px + gap_px
+        guide_x = frame_px
+        slot_x = frame_px + guide_and_gap_px
+        text_x = slot_x + icon_and_gap_px
     else:
-        text_x, icon_x = frame_px, frame_px + text_width_px + gap_px
-    if not icon_commands:
         text_x = frame_px
+        slot_x = text_x + text_width_px + gap_px
+        guide_x = total_width_px - frame_px - guide_px
+    slack_px = slot_px - icon_width_px
+    icon_x = slot_x + {"left": 0.0, "center": slack_px / 2, "right": slack_px}[icon_align]
 
     paths = []
     if border:
@@ -455,9 +489,15 @@ def build_label(
             radius_px,
         )))
 
+    if guide_px:
+        top = frame_px
+        paths.append(("guide", f"M{guide_x:.3f},{top:.3f}L{guide_x + guide_px:.3f},{top:.3f}"
+                               f"L{guide_x + guide_px:.3f},{height_px - frame_px:.3f}"
+                               f"L{guide_x:.3f},{height_px - frame_px:.3f}Z"))
+
     if icon_commands:
         paths.append(("icon", svgpath.serialize(svgpath.translate(
-            icon_commands, icon_x, (height_px - icon_height_in * PX_PER_IN) / 2
+            icon_commands, icon_x, (height_px - icon_height_px) / 2
         ))))
 
     if text_commands:

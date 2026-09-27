@@ -10,9 +10,9 @@ the text stacked over the icon. Every label carries a pictogram plus text set in
 label after that renders offline in milliseconds.
 
 ```
-╭─────────────╮                                      ╭──────────────╮
-│ ▮ SOCKETS   │                                      │  3/8 DRIVE ▮ │
-╰─────────────╯                                      ╰──────────────╯
+╭───────────────╮                                    ╭────────────────╮
+│ ▌ ▮  SOCKETS  │                                    │  3/8 DRIVE  ▮ ▐ │
+╰───────────────╯                                    ╰────────────────╯
  primary: left justified, icon prefix    secondary: right justified, icon suffix
 ```
 
@@ -20,6 +20,17 @@ Each drawer label is ringed by a rounded frame held 5 px clear of the content. T
 frame is a single cut line, not a shape: it bounds the plate so the negative around
 the letters lifts off as one piece. Icon and cap height are equal and sized to
 whatever the frame leaves.
+
+The icon sits in a **fixed 0.75 in slot** (`--icon-slot`), centered by default
+(`--icon-align left|center|right`), so the text starts at the same distance from the
+label's edge on every drawer no matter how wide the pictogram is. An icon wider than
+the slot is scaled down to fit it; `--icon-slot 0` goes back to hugging the icon.
+
+On the outer edge is a **0.1 in alignment bar** (`--guide`). It is a positive piece,
+so it weeds and rides the transfer tape with the rest of the label: square its outer
+edge to the drawer edge or a pencil line, burnish the label down, then hook the bar
+off. The distance from that edge to the text is the same on every label.
+`--guide 0` omits it.
 
 ## Why the output is safe to cut
 
@@ -98,7 +109,13 @@ folder:
 ```
 
 `icon_desc` is only read the first time a slug is generated; afterwards the slug
-resolves straight from the cache. Descriptions are remembered in
+resolves straight from the cache. Drawer icons are prompted as a square composition
+made of one connected black shape, since a long thin icon wastes its slot and
+detached pieces slide around on transfer tape. Each generation is traced and its
+separate black pieces counted; more than `--max-pieces` (default 3) rerolls the
+image, up to `--attempts` (default 2), keeping the cleanest. `batch --regen`
+regenerates every drawer icon with the current prompt; imported art is retraced from
+its source file rather than regenerated. Descriptions are remembered in
 `icons/catalog.json`, so later drawers can reference `"icon": "socket"` alone.
 
 `batch` also nests every label onto **12 x 12 in** sheets — `out/sheets/sheet-NN.svg`

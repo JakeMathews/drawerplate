@@ -39,6 +39,15 @@ def add_style_arguments(parser):
                        help="corner rounding on the frame (default 0.09)")
     group.add_argument("--gap", type=float, default=0.12, metavar="IN",
                        help="space between icon and text (default 0.12)")
+    group.add_argument("--icon-slot", type=float, default=0.75, metavar="IN",
+                       help="fixed width reserved for the icon so text lines up across "
+                            "drawers; wider icons shrink to fit (default 0.75, 0 hugs "
+                            "the icon)")
+    group.add_argument("--icon-align", default="center", choices=["left", "center", "right"],
+                       help="where the icon sits inside its slot (default center)")
+    group.add_argument("--guide", type=float, default=0.1, metavar="IN",
+                       help="width of the peel-off alignment bar on the label's outer "
+                            "edge (default 0.1, 0 omits it)")
     group.add_argument("--pad", type=float, default=0.0, metavar="IN",
                        help="blank margin outside the frame (default 0)")
     group.add_argument("--tracking", type=float, default=0.0, metavar="EM",
@@ -112,7 +121,14 @@ def add_trace_arguments(parser, icon_style="solid"):
     group.add_argument("--quality", default="high", choices=["low", "medium", "high"])
     group.add_argument("--icon-style", default=icon_style, choices=sorted(icons.PROMPTS),
                        help="solid silhouette (weeds best) or heavy outline drawing")
-    group.add_argument("--regen", action="store_true", help="regenerate cached icons")
+    group.add_argument("--max-pieces", type=int, default=3, metavar="N",
+                       help="reroll a generated icon that traces to more than N separate "
+                            "black pieces; islands fall off transfer tape (default 3)")
+    group.add_argument("--attempts", type=int, default=2, metavar="N",
+                       help="image generations to try before keeping the one with the "
+                            "fewest pieces (default 2)")
+    group.add_argument("--regen", action="store_true",
+                       help="regenerate cached icons (imported ones are retraced instead)")
     group.add_argument("--retrace", action="store_true",
                        help="re-vectorize cached PNGs without calling OpenAI")
 
@@ -129,6 +145,9 @@ def style_options(args):
         border_px=args.border,
         inset_px=args.inset,
         corner_radius_in=args.corner_radius,
+        icon_slot_in=args.icon_slot,
+        icon_align=args.icon_align,
+        guide_in=args.guide,
         font_path=args.font,
     )
 
@@ -163,7 +182,8 @@ def resolve_icon(slug, description, args):
         return None
     regen = "retrace" if args.retrace else args.regen
     return icons.ensure(slug, description, regen=regen, quality=args.quality,
-                        style=args.icon_style, **trace_options(args))
+                        style=args.icon_style, max_pieces=args.max_pieces,
+                        attempts=args.attempts, **trace_options(args))
 
 
 def relative_to_root(path):
@@ -394,7 +414,8 @@ def run_icon(args):
         regen = "retrace" if args.retrace else True
         for slug in args.slugs:
             icons.ensure(slug, args.desc, regen=regen, quality=args.quality,
-                         style=args.icon_style, **trace_options(args))
+                         style=args.icon_style, max_pieces=args.max_pieces,
+                         attempts=args.attempts, **trace_options(args))
             print(f"  wrote icons/{slug}.svg")
     elif args.icon_command == "import":
         meta = icons.import_file(args.slug, args.file, args.desc, **trace_options(args))
