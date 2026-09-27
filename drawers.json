@@ -186,6 +186,45 @@
         "icon": "pocket-hole",
         "icon_desc": "a pocket hole jig block, a chunky rectangular block seen from the side with two steep angled guide holes bored diagonally down through it, and a drill bit entering the upper hole at an angle"
       }
+    },
+    {
+      "name": "21-laser-scanning",
+      "primary": {
+        "text": "LASER SCANNING",
+        "icon": "laser-scanner",
+        "icon_desc": "a small pocket 3D scanner shaped like a plain flat rectangular box with rounded corners, the size of a thick smartphone, seen in three quarter view lying horizontally, with no handle and no grip of any kind, a row of three round camera lenses across the front face and a fan of seven straight laser lines projecting forward from the front"
+      },
+      "secondary": {
+        "text": "ORBITAL SANDER",
+        "icon": "orbital-sander",
+        "icon_desc": "a random orbital palm sander seen from the side, a rounded dome shaped palm grip body on top of a flat round sanding pad, with a small dust bag sticking out the back"
+      }
+    },
+    {
+      "name": "22-bolt-cutters",
+      "primary": {
+        "text": "BOLT CUTTERS",
+        "icon": "bolt-cutters",
+        "icon_desc": "a pair of bolt cutters seen from above, two long straight handles spread in a V with a compound hinge and short stubby cutting jaws at the top"
+      },
+      "secondary": {
+        "text": "LATCHES",
+        "icon": "cabinet-latch",
+        "icon_desc": "a cabinet door latch, a rectangular spring loaded catch plate with a curved hook tongue engaging a matching strike plate, seen straight on"
+      }
+    },
+    {
+      "name": "23-odd-sockets",
+      "primary": {
+        "text": "ODD SOCKETS",
+        "icon": "odd-socket",
+        "icon_desc": "a spark plug socket standing upright next to a shorter oil filter cup socket and a small twelve point star socket, three unusual sockets in a row seen from the side"
+      },
+      "secondary": {
+        "text": "SPECIALTY WRENCHES",
+        "icon": "adjustable-wrench",
+        "icon_desc": "a large solid metal adjustable crescent wrench standing upright, a long flat straight handle with a wide angled open jaw at the top, one fixed jaw and one sliding jaw with a knurled thumb adjusting screw worm at the neck"
+      }
     }
   ]
 }
