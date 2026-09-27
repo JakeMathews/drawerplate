@@ -7,7 +7,7 @@
         "text": "SOCKETS",
         "icon": "socket"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "02-wrenches",
@@ -15,7 +15,7 @@
         "text": "WRENCHES",
         "icon": "wrench"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "03-torque-wrenches",
@@ -24,7 +24,7 @@
         "icon": "torque-wrench",
         "icon_desc": "a torque wrench seen from the side, long straight handle running left to right with a square drive head at the right end and a small dial gauge on the handle"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "04-tap-die",
@@ -37,7 +37,7 @@
         "text": "EXTRACTORS",
         "icon": "extractor"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "05-hand-tools",
@@ -45,7 +45,7 @@
         "text": "HAND TOOLS",
         "icon": "pliers"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "06-tape",
@@ -59,7 +59,7 @@
         "icon": "sticker",
         "icon_desc": "a square adhesive sticker seen straight on, lying flat, with one bottom corner peeled up and curling back to show the underside, like a peel and stick label"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "07-drills",
@@ -68,7 +68,7 @@
         "icon": "drill",
         "icon_desc": "a cordless power drill seen from the side facing left, pistol grip with a battery pack at the bottom of the handle and a chuck with a drill bit at the front"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "08-grinding",
@@ -82,7 +82,7 @@
         "icon": "recip-saw",
         "icon_desc": "a reciprocating sawzall seen from the side facing right, a long horizontal barrel body with a grip handle at the left end and a straight toothed saw blade sticking out the right end"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "09-band-saw",
@@ -91,7 +91,7 @@
         "icon": "bandsaw",
         "icon_desc": "a handheld deep-cut portable band saw, angular side view, rectangular body with a large square cutting throat punched through it, blade running down the left of the throat, pistol grip at the lower right and a bar handle on top"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "10-circular-saw",
@@ -100,7 +100,7 @@
         "icon": "circular-saw",
         "icon_desc": "a circular saw seen from the side facing left, a large round toothed blade with a curved blade guard over the top, a motor body behind it and a handle on top"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "11-hammers",
@@ -109,7 +109,7 @@
         "icon": "hammer",
         "icon_desc": "a claw hammer standing upright with the head at the top, a thick straight handle and a chunky head with a flat striking face on the right and a curved claw on the left"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "12-inspection",
@@ -118,7 +118,7 @@
         "icon": "multimeter",
         "icon_desc": "a handheld digital multimeter standing upright, a rounded rectangular body with a wide display screen at the top, a round selector dial below it, and two test probe leads trailing from the bottom"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "13-dremel",
@@ -127,7 +127,7 @@
         "icon": "rotary-tool",
         "icon_desc": "a rotary tool held like a pen, a long cylindrical body lying diagonally with a tapered nose collet at the lower right and a small round cutting wheel mounted in it"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "14-safety",
@@ -136,7 +136,7 @@
         "icon": "safety-glasses",
         "icon_desc": "a pair of wraparound safety glasses seen straight on from the front, one wide continuous lens across both eyes with thick temple arms sweeping back on each side"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "15-spray-gun",
@@ -145,7 +145,7 @@
         "icon": "spray-gun",
         "icon_desc": "an HVLP paint spray gun seen from the side facing left, a pistol grip body with a trigger, a round nozzle at the front and a cylindrical paint cup mounted underneath"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "16-jigsaw",
@@ -159,7 +159,7 @@
         "icon": "helicoil",
         "icon_desc": "a helicoil wire thread insert standing upright, a short cylindrical coil of thick diamond shaped wire wound in a few even spiral turns like a stretched spring, with a small straight tang sticking out at the bottom"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "17-router",
@@ -168,7 +168,7 @@
         "icon": "router-tool",
         "icon_desc": "a compact wood router seen from the side, a tall cylindrical motor body sitting on a wide flat round base with a router bit pointing down through the middle of the base"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "18-fasteners",
@@ -177,7 +177,7 @@
         "icon": "fastener",
         "icon_desc": "a hex head bolt standing upright with the six sided head at the top and a long threaded shank below it, with a matching hex nut threaded onto the middle of the shank"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "19-solvents",
@@ -191,7 +191,7 @@
         "icon": "glue-bottle",
         "icon_desc": "a bottle of glue standing upright, a rounded squeeze bottle body with a tall pointed conical applicator nozzle cap on top and a single fat drop of glue falling from the tip"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "20-dowels-jigs",
@@ -205,7 +205,7 @@
         "icon": "pocket-hole",
         "icon_desc": "a pocket hole jig block, a chunky rectangular block seen from the side with two steep angled guide holes bored diagonally down through it, and a drill bit entering the upper hole at an angle"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "21-laser-scanning",
@@ -219,7 +219,7 @@
         "icon": "orbital-sander",
         "icon_desc": "a random orbital palm sander seen from the side, a rounded dome shaped palm grip body on top of a flat round sanding pad, with a small dust bag sticking out the back"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "22-bolt-cutters",
@@ -233,7 +233,7 @@
         "icon": "cabinet-latch",
         "icon_desc": "a cabinet door latch, a rectangular spring loaded catch plate with a curved hook tongue engaging a matching strike plate, seen straight on"
       },
-      "cut": false
+      "cut": true
     },
     {
       "name": "23-odd-sockets",
@@ -247,7 +247,7 @@
         "icon": "adjustable-wrench",
         "icon_desc": "a large solid metal adjustable crescent wrench standing upright, a long flat straight handle with a wide angled open jaw at the top, one fixed jaw and one sliding jaw with a knurled thumb adjusting screw worm at the neck"
       },
-      "cut": false
+      "cut": true
     }
   ]
 }
