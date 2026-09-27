@@ -11,7 +11,7 @@ label after that renders offline in milliseconds.
 
 ```
 ╭───────────────╮                                    ╭────────────────╮
-│ ▌ ▮  SOCKETS  │                                    │  3/8 DRIVE  ▮ ▐ │
+│ ▌ ▮  SOCKETS  │                                    │  3/8 DRIVE ▮ ▐ │
 ╰───────────────╯                                    ╰────────────────╯
  primary: left justified, icon prefix    secondary: right justified, icon suffix
 ```
