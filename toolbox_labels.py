@@ -241,13 +241,16 @@ def _clear_stale_sheets(stem):
 
 
 def write_sheets(items, args, stem):
-    if getattr(args, "no_sheets", False) or not items:
+    if getattr(args, "no_sheets", False):
         return
-    sheets = labels.nest(items, args.sheet_width, args.sheet_height,
-                         args.label_height, args.gutter, args.sheet_margin)
     print(f"sheets ({args.sheet_width:g} x {args.sheet_height:g} in):")
     stem.parent.mkdir(parents=True, exist_ok=True)
     _clear_stale_sheets(stem)
+    if not items:
+        print("  nothing left to nest")
+        return
+    sheets = labels.nest(items, args.sheet_width, args.sheet_height,
+                         args.label_height, args.gutter, args.sheet_margin)
     for number, placed in enumerate(sheets, 1):
         path = stem.parent / f"{stem.name}-{number:02d}.svg"
         path.write_text(labels.nest_sheet(placed, args.sheet_width, args.sheet_height))
